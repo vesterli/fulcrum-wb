@@ -98,13 +98,13 @@ function drawBackgroundColor() {
 } else {
 	echo "
       left: 60,
-      top: 10,
+      top: 50,
       right: 10,
       bottom: 40\n";
 }?>
     },
     legend: {
-      position: 'in'
+      position: 'top'
     },
     pointSize: 5
   };
