@@ -2,7 +2,7 @@
 require 'config.inc';
 
 /* VARIABLES */
-$ver = "0.8";
+$ver = "0.8.1";
 $tabindex=1;
 
 $con = mysqli_connect($dbserver,$dbuser,$dbpass,$dbname) or die(mysql_error());
