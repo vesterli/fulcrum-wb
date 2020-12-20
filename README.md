@@ -6,7 +6,7 @@ By Sten Vesterli <sten@vesterli.com> for use in Roskilde Flyveklub.
 This is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by Caleb Newville <caleb@inetwiz.com>. Most of the functionality is from that project.
 
 # Original readme.txt from TippingPoint
-##TippingPoint - Aircraft Weight & Balance
+## TippingPoint - Aircraft Weight & Balance
 http://www.TippingPointTool.com
 v1.0.1 - 25 Apr 2020
 
