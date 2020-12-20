@@ -1,7 +1,7 @@
 <?php ob_start(); ?>
 <html>
 <head>
-<title>TippingPoint - Initial Setup</title>
+<title>Fulcrum W&amp;B - Initial Setup</title>
 
 <style type="text/css">
 <!--
@@ -18,14 +18,13 @@ abbr {border-bottom: 1px dashed; cursor: help;}
 </style>
 
 <body><table border="1" cellpadding="3" width="700" align="center"><tr><td>
-	<div class="titletext" style="text-align: center">TippingPoint - Initial Setup</div>
+	<div class="titletext" style="text-align: center">Fulcrum W&amp;B - Initial Setup</div>
 
 
 <?php
 if (file_exists("config.inc") && $_REQUEST['func']=="") {
-	echo "Tipping point is already installed.";
+	echo "Fulcrum W&amp;B is already installed.";
 	chmod("setup.php", 0000);
-	chmod("upgrade.php", 0000);
 
 } else {
 	switch ($_REQUEST["func"]) {
@@ -81,7 +80,7 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 			// Insert system settings into database
 			$sql_query = "INSERT INTO `configuration` (`id`, `item`, `value`) "
 			.    "VALUES (1, 'site_name', '" . $_REQUEST['site_name'] . "'), (2, 'administrator', '" . $_REQUEST['administrator'] . "'), (3, 'timezone', '" . $_REQUEST['timezone'] . "'), "
-			.    "(4, 'update_check', '" . time() . "'), (5, 'update_version', '" . $ver . "');";
+			.    "(4, 'db_version', '" . $ver . "');";
 			mysqli_query($con,$sql_query);
 
 			echo("<p>Create an administrative user.</p>\n"
@@ -105,10 +104,9 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 			mysqli_query($con,$sql_query);
 
 			echo("<p>Initial setup is complete.  Proceed to the <a href=\"admin.php\">admin page</a> and create your first aircraft.</p>"
-			.    "<p>If you find bugs or have a suggestion, please <a href=\"https://sourceforge.net/p/tippingpoint/tickets/\" target=\"_blank\">let us know</a>.  Thanks for using TippingPoint!</p>\n");
+			.    "<p>If you find bugs or have a suggestion, please <a href=\"https://github.com/vesterli/fulcrum-wb/issues\" target=\"_blank\">let me know</a>. I hope you will enjoy Fulcrum W&amp;B.</p>\n");
 
 			chmod("setup.php", 0000);
-			chmod("upgrade.php", 0000);
 			break;
 
 	    default:
@@ -129,6 +127,6 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 
 
 </td></tr></table>
-<p class="noprint" style="text-align:center; font-size:12px;"><i><a href="http://www.TippingPointTool.com" target="_blank">TippingPoint - Open Source Weight &amp; Balance Software</a></i></p>
+<p class="noprint" style="text-align:center; font-size:12px;"><i><a href="https://github.com/vesterli/fulcrum-wb" target="_blank">Fulcrum W&amp;B - Open Source Weight &amp; Balance Software</a></i></p>
 
 </body></html>
