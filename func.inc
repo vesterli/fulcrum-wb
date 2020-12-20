@@ -2,13 +2,13 @@
 require 'config.inc';
 
 /* VARIABLES */
-$ver = "1.0.1";
+$ver = "0.8";
 $tabindex=1;
 
 $con = mysqli_connect($dbserver,$dbuser,$dbpass,$dbname) or die(mysql_error());
 // mysqli_select_db($dbname) or die(mysql_error());
 
-$config_result = mysqli_query($con,"SELECT * FROM `configuration`;");
+$config_result = mysqli_query($con,"SELECT * FROM configuration;");
 while($config_row = mysqli_fetch_assoc($config_result)) {
   $config{$config_row['item']}=$config_row['value'];
 }
@@ -20,7 +20,7 @@ function PageHeader($site_name) {
 	<!DOCTYPE HTML>
 	<html>
 	<head>
-	<title>TippingPoint - <?php echo($site_name); ?></title>
+	<title>Fulcrum W&B - <?php echo($site_name); ?></title>
 	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 
 	<style type="text/css">
@@ -38,15 +38,8 @@ function PageHeader($site_name) {
 	.numbergals {text-align: right; width: 40px;}
 	@media print { .noprint { display: none; } }
 	#toolbar
-		{width: 900px; left: 0px; right: 0px; height: 35px; position:fixed; bottom:0px; margin-right: auto; margin-left: auto; z-index:100; background-color: #800000; color: white;
-		background-image: linear-gradient(bottom, rgb(128,0,0) 75%, rgb(128,0,0) 62%, rgb(255,255,255) 81%);
-		background-image: -o-linear-gradient(bottom, rgb(128,0,0) 75%, rgb(128,0,0) 62%, rgb(255,255,255) 81%);
-		background-image: -moz-linear-gradient(bottom, rgb(128,0,0) 75%, rgb(128,0,0) 62%, rgb(255,255,255) 81%);
-		background-image: -webkit-linear-gradient(bottom, rgb(128,0,0) 75%, rgb(128,0,0) 62%, rgb(255,255,255) 81%);
-		background-image: -ms-linear-gradient(bottom, rgb(128,0,0) 75%, rgb(128,0,0) 62%, rgb(255,255,255) 81%);
-		background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.75, rgb(128,0,0)), color-stop(0.62, rgb(128,0,0)), color-stop(0.81, rgb(255,255,255)));
-	}
-	#toolbar a:link, #toolbar a:visited, #toolbar a:hover {color: yellow; text-decoration: none;}
+		{width: 700px; left: 0px; right: 0px; height: 35px; position:fixed; bottom:0px; margin-right: auto; margin-left: auto; z-index:100; background-color: #00304E; color: white;}
+	#toolbar a:link, #toolbar a:visited, #toolbar a:hover {color: white; text-decoration: none;}
 	-->
 	</style>
 	<?php
@@ -54,8 +47,10 @@ function PageHeader($site_name) {
 
 function PageFooter($site_name,$admin,$ver) {
 	?>
-	<p class="noprint" style="text-align:center; font-size:12px; font-style:italic;"><?php echo($site_name); ?> - <a href="mailto:<?php echo($admin); ?>?subject=TippingPoint%20on%20<?php echo($_SERVER["HTTP_HOST"]); ?>"><?php echo($admin); ?></a><br />
-	<a href="http://www.TippingPointTool.com" target="_blank">TippingPoint - Open Source Weight &amp; Balance Software</a> - Version <?php echo($ver); ?></p>
+	<p class="noprint" style="text-align:center; font-size:12px; font-style:italic;">
+  <?php echo($site_name); ?> - <a href="mailto:<?php echo($admin); ?>?subject=Fulcrum%20W%26B"><?php echo($admin); ?></a><br />
+  <a href="https://github.com/vesterli/fulcrum-wb" target="_blank">Fulcrum W&amp;B</a> open source Weight &amp; Balance software</a> - Version <?php echo($ver); ?><br/>
+  Based on <a href="www.tippingpointtool.com" target="_blank">TippingPoint</a> by Caleb Newville</p>
 	<div style="height: 20px;"></div>
 	</body></html>
 	<?php

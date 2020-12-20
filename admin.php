@@ -564,7 +564,7 @@ echo "</td></tr></table>";
 <div id="toolbar" class="noprint" style="line-height:35px;">
 <span style="width: 130px; float: left; line-height:40px;"><abbr title="TippingPoint is free, open source weight and balance software.  Click to find out how to use it for your flight department, flight school, FBO or even your own personal aircraft.">
 <a href="http://tippingpoint.sf.net" target="_blank" style="font-size:22px; color: yellow;">TippingPoint</a></abbr></span>
-<span style="width: 770px; text-align:center; float: right; line-height:45px;">
+<span style="width: 700px; text-align:center; float: right; line-height:45px;">
 <a href="admin.php?func=system">Edit System Settings</a> | <a href="admin.php?func=aircraft">Edit Aircraft</a> | <a href="admin.php?func=users">Edit Users</a> |
 <a href="admin.php?func=audit">Audit Log</a> | <a href="admin.php?func=logout">Logout <?php echo $_SESSION["user_name"]; ?></a>
 </span></div>

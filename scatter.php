@@ -60,10 +60,10 @@ function drawBackgroundColor() {
 
   var options = {
     hAxis: {
-      title: 'Inches From Reference Datum'
+      title: 'Meters From Reference Datum'
     },
     vAxis: {
-      title: 'Pounds',
+      title: 'Kg',
       textPosition: 'out',
       viewWindowMode: 'maximized'
     },

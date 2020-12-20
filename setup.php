@@ -49,10 +49,10 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 			.	"SET time_zone = \"+00:00\";\n"
 			.   "CREATE TABLE IF NOT EXISTS `aircraft` (`id` int(11) NOT NULL auto_increment, `active` tinyint(1) NOT NULL default '1', `tailnumber` char(25) NOT NULL, `makemodel` char(50) NOT NULL, `emptywt` float NOT NULL, `emptycg` float NOT NULL, `maxwt` float NOT NULL, `cglimits` char(60) NOT NULL, `cgwarnfwd` float NOT NULL, `cgwarnaft` float NOT NULL, `fuelunit` char(25) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
 			.   "CREATE TABLE IF NOT EXISTS `aircraft_cg` (`id` int(11) NOT NULL auto_increment, `tailnumber` int(11) NOT NULL, `arm` float NOT NULL, `weight` float NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
-			.   "CREATE TABLE IF NOT EXISTS `aircraft_weights` (`id` int(11) NOT NULL auto_increment, `tailnumber` int(11) NOT NULL, `order` smallint(3) NOT NULL, `item` char(50) NOT NULL, `weight` float NOT NULL, `arm` float NOT NULL, `emptyweight` enum('true','false') NOT NULL default 'false', `fuel` enum('true','false') NOT NULL default 'false', `fuelwt` float NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
+			.   "CREATE TABLE IF NOT EXISTS `aircraft_weights` (`id` int(11) NOT NULL auto_increment, `tailnumber` int(11) NOT NULL, `order` smallint(3) NOT NULL, `item` char(50) NOT NULL, `weight` float NOT NULL, `arm` float NOT NULL, `emptyweight` enum('true','false') NOT NULL default 'false', `fuel` enum('true','false') NOT NULL default 'false', `fuelwt` float NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
 			.   "CREATE TABLE IF NOT EXISTS `audit` (`id` int(11) NOT NULL auto_increment, `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP, `who` char(24) NOT NULL, `what` varchar(32768) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
 			.   "CREATE TABLE IF NOT EXISTS `configuration` (`id` int(11) NOT NULL auto_increment, `item` char(30) NOT NULL, `value` varchar(255) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n"
-			.   "CREATE TABLE IF NOT EXISTS `users` (`id` int(11) NOT NULL auto_increment, `username` char(24) NOT NULL, `password` char(32) NOT NULL, `name` char(48) NOT NULL, `email` char(48) NOT NULL, `superuser` tinyint(4) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n";
+			.   "CREATE TABLE IF NOT EXISTS `users` (`id` int(11) NOT NULL auto_increment, `username` char(24) NOT NULL, `password` varchar(255) NOT NULL, `name` char(48) NOT NULL, `email` char(48) NOT NULL, `superuser` tinyint(4) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n";
 			mysqli_multi_query($con,$sql_query);
 
 			header("Location: http://" . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . "?func=step3");
@@ -115,8 +115,8 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 		echo("<p>Enter your MySQL server information.</p>\n"
 		.    "<form method=\"post\" action=\"setup.php\"><input type=\"hidden\" name=\"func\" value=\"step2\">\n"
 		.    "<table align=\"center\">\n"
-		.    "<tr><td align=\"right\">Database Server</td><td><input type=\"text\" name=\"dbserver\" value=\"localhost\"></td></tr>\n"
-		.    "<tr><td align=\"right\">Database Name</td><td><input type=\"text\" name=\"dbname\" value=\"tippingpoint\"></td></tr>\n"
+		.    "<tr><td align=\"right\">Database Server</td><td><input type=\"text\" name=\"dbserver\" value=\"127.0.0.1\"></td></tr>\n"
+		.    "<tr><td align=\"right\">Database Name</td><td><input type=\"text\" name=\"dbname\" value=\"fulcrumdb\"></td></tr>\n"
 		.    "<tr><td align=\"right\">Database Username</td><td><input type=\"text\" name=\"dbuser\"></td></tr>\n"
 		.    "<tr><td align=\"right\">Database Password</td><td><input type=\"text\" name=\"dbpass\"></td></tr>\n"
 		.    "<td colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Step 2\"></td></tr>\n"
