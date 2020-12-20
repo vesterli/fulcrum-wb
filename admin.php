@@ -23,18 +23,11 @@ if ($_REQUEST['func'] != "login") {
 }
 
 echo "<body>\n";
-
-// UPDATE CHECK
-if ($config['update_check'] < (time()-604800)) {
-	$ver_dist = file_get_contents("http://tippingpoint.sourceforge.net/version.txt");
-	mysqli_query($con,"UPDATE configuration SET `value` = '" . time() . "' WHERE `item` = 'update_check'");
-	mysqli_query($con,"UPDATE configuration SET `value` = '" . $ver_dist . "' WHERE `item` = 'update_version'");
-	mysqli_query($con,"INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, '" . $loginuser . "', 'UPDATE_CHECK: installed " . $ver . ", available " . $config['update_version'] . "')");
-}
-if ($ver != $config['update_version'] && $loginlevel=="1") {
+// Verify database version OK
+if ($ver != $config['db_version'] && $loginlevel=="1") {
 	echo "<div style=\"text-align: center; background-color: #FFFF80\">\n";
-	echo "TippingPoint version " . $config['update_version'] . " is available, you are currently running version " . $ver . ".<br>\n";
-	echo "View the <a href=\"http://tippingpoint.sourceforge.net/changelog.txt\" target=\"_blank\">changelog</a> to see what's new, or visit the <a href=\"http://sourceforge.net/p/tippingpoint\" target=\"_blank\">project homepage</a> to download.<br>\n";
+	echo "Setup error: Fulcrum database is version " . $config['db_version'] . ", expected " . $ver . ".<br>\n";
+	echo "Please update the database. <br>\n";
 	echo "</div>\n";
 }
 
@@ -562,12 +555,16 @@ echo "</td></tr></table>";
 ?>
 
 <div id="toolbar" class="noprint" style="line-height:35px;">
-<span style="width: 130px; float: left; line-height:40px;"><abbr title="TippingPoint is free, open source weight and balance software.  Click to find out how to use it for your flight department, flight school, FBO or even your own personal aircraft.">
-<a href="http://tippingpoint.sf.net" target="_blank" style="font-size:22px; color: yellow;">TippingPoint</a></abbr></span>
-<span style="width: 700px; text-align:center; float: right; line-height:45px;">
-<a href="admin.php?func=system">Edit System Settings</a> | <a href="admin.php?func=aircraft">Edit Aircraft</a> | <a href="admin.php?func=users">Edit Users</a> |
-<a href="admin.php?func=audit">Audit Log</a> | <a href="admin.php?func=logout">Logout <?php echo $_SESSION["user_name"]; ?></a>
-</span></div>
+  <span style="width: 200px; float: left; line-height:40px;">&nbsp;&nbsp;
+    <abbr title="Fulcrum W&amp;B is free, open source weight and balance software.">
+      <a href="https://github.com/vesterli/fulcrum-wb" target="_blank" style="font-size:20px; color: white;">Fulcrum W&amp;B</a>
+    </abbr>
+  </span>
+  <span style="width: 500px; text-align:center; float: center; line-height:45px;">
+		<a href="admin.php?func=system">Edit System Settings</a> | <a href="admin.php?func=aircraft">Edit Aircraft</a> | <a href="admin.php?func=users">Edit Users</a> |
+		<a href="admin.php?func=audit">Audit Log</a> | <a href="admin.php?func=logout">Logout <?php echo $_SESSION["user_name"]; ?></a>
+  </span>
+</div>
 
 <?php
 PageFooter($config['site_name'],$config['administrator'],$ver);

@@ -3,12 +3,13 @@ require 'config.inc';
 
 /* VARIABLES */
 $ver = "0.8.1";
+$dbver = "0.8.1";
 $tabindex=1;
 
 $con = mysqli_connect($dbserver,$dbuser,$dbpass,$dbname) or die(mysql_error());
 // mysqli_select_db($dbname) or die(mysql_error());
 
-$config_result = mysqli_query($con,"SELECT * FROM configuration;");
+$config_result = mysqli_query($con,"SELECT * FROM `configuration`;");
 while($config_row = mysqli_fetch_assoc($config_result)) {
   $config{$config_row['item']}=$config_row['value'];
 }
