@@ -24,7 +24,7 @@ if ($_REQUEST['func'] != "login") {
 
 echo "<body>\n";
 // Verify database version OK
-if ($ver != $config['db_version'] && $loginlevel=="1") {
+if ($dbver != $config['db_version'] && $loginlevel=="1") {
 	echo "<div style=\"text-align: center; background-color: #FFFF80\">\n";
 	echo "Setup error: Fulcrum database is version " . $config['db_version'] . ", expected " . $ver . ".<br>\n";
 	echo "Please update the database. <br>\n";
@@ -567,6 +567,6 @@ echo "</td></tr></table>";
 </div>
 
 <?php
-PageFooter($config['site_name'],$config['administrator'],$ver);
+PageFooter($config['site_name'],$config['administrator'],$ver, $dbver);
 // mysqli_close();
 ?>

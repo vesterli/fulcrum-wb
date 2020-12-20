@@ -46,11 +46,11 @@ function PageHeader($site_name) {
 	<?php
 }
 
-function PageFooter($site_name,$admin,$ver) {
+function PageFooter($site_name,$admin,$ver,$dbver) {
 	?>
 	<p class="noprint" style="text-align:center; font-size:12px; font-style:italic;">
   <?php echo($site_name); ?> - <a href="mailto:<?php echo($admin); ?>?subject=Fulcrum%20W%26B"><?php echo($admin); ?></a><br />
-  <a href="https://github.com/vesterli/fulcrum-wb" target="_blank">Fulcrum W&amp;B</a> open source Weight &amp; Balance software</a> - Version <?php echo($ver); ?><br/>
+  <a href="https://github.com/vesterli/fulcrum-wb" target="_blank">Fulcrum W&amp;B</a> open source Weight &amp; Balance software</a> <?php echo($ver); ?> (DB <?php echo($dbver); ?>)<br/>
   Based on <a href="www.tippingpointtool.com" target="_blank">TippingPoint</a> by Caleb Newville</p>
 	<div style="height: 20px;"></div>
 	</body></html>

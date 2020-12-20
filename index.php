@@ -302,6 +302,6 @@ echo "<iframe id=\"wbimage\" src=\"loading.png\" width=\"710\" height=\"360\" st
 }
 ?>
 
-<?php PageFooter($config['site_name'],$config['administrator'],$ver);
+<?php PageFooter($config['site_name'],$config['administrator'],$ver, $dbver);
 // mysqli_close();
 ?>
