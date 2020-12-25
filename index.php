@@ -61,7 +61,7 @@ while($weights = mysqli_fetch_assoc($weights_query)) {
 			if (empty($_REQUEST["line" . $weights['id'] . "_wt"])) { echo($weights['weight']); } else { echo($_REQUEST["line" . $weights['id'] . "_wt"]); }
 			echo  ";\n";
 	}
-	echo "df.line" . $weights['id'] . "_arm.value = Number(" . $weights['arm'] . ").toFixed(1);\n\n";
+	echo "df.line" . $weights['id'] . "_arm.value = Number(" . $weights['arm'] . ").toFixed(2);\n\n";
 }
 
 ?>
@@ -80,15 +80,15 @@ while($weights = mysqli_fetch_assoc($weights_query)) {
 	if ($weights['fuel']=="true") {
 		echo "var line" . $weights['id'] . "_gallons_to = df.line" . $weights['id'] . "_gallons_to.value;\n";
 		echo "var line" . $weights['id'] . "_wt_to = line" . $weights['id'] . "_gallons_to * " . $weights['fuelwt'] . ";\n";
-		echo "df.line" . $weights['id'] . "_wt_to.value = (line" . $weights['id'] . "_gallons_to * " . $weights['fuelwt'] . ").toFixed(1);\n";
+		echo "df.line" . $weights['id'] . "_wt_to.value = (line" . $weights['id'] . "_gallons_to * " . $weights['fuelwt'] . ").toFixed(2);\n";
 		echo "var line" . $weights['id'] . "_mom_to = line" . $weights['id'] . "_wt_to * line" . $weights['id'] . "_arm;\n";
-		echo "df.line" . $weights['id'] . "_mom_to.value = line" . $weights['id'] . "_mom_to.toFixed(1);\n";
+		echo "df.line" . $weights['id'] . "_mom_to.value = line" . $weights['id'] . "_mom_to.toFixed(2);\n";
 
 		echo "var line" . $weights['id'] . "_gallons_ldg = df.line" . $weights['id'] . "_gallons_ldg.value;\n";
 		echo "var line" . $weights['id'] . "_wt_ldg = line" . $weights['id'] . "_gallons_ldg * " . $weights['fuelwt'] . ";\n";
-		echo "df.line" . $weights['id'] . "_wt_ldg.value = (line" . $weights['id'] . "_gallons_ldg * " . $weights['fuelwt'] . ").toFixed(1);\n";
+		echo "df.line" . $weights['id'] . "_wt_ldg.value = (line" . $weights['id'] . "_gallons_ldg * " . $weights['fuelwt'] . ").toFixed(2);\n";
 		echo "var line" . $weights['id'] . "_mom_ldg = line" . $weights['id'] . "_wt_ldg * line" . $weights['id'] . "_arm;\n";
-		echo "df.line" . $weights['id'] . "_mom_ldg.value = line" . $weights['id'] . "_mom_ldg.toFixed(1);\n\n";
+		echo "df.line" . $weights['id'] . "_mom_ldg.value = line" . $weights['id'] . "_mom_ldg.toFixed(2);\n\n";
 
 		$momentlist_to[0] = $momentlist_to[0] . " -line" . $weights['id'] . "_mom_to";
 		$wtlist_to[0] = $wtlist_to[0] . " -line" . $weights['id'] . "_wt_to";
@@ -97,21 +97,21 @@ while($weights = mysqli_fetch_assoc($weights_query)) {
 	} else {
 		echo "var line" . $weights['id'] . "_wt = Number(df.line" . $weights['id'] . "_wt.value);" . "\n";
 		echo "var line" . $weights['id'] . "_mom = (Number(line" . $weights['id'] . "_wt) * Number(line" . $weights['id'] . "_arm));\n";
-		echo "df.line" . $weights['id'] . "_mom.value = Number(line" . $weights['id'] . "_mom).toFixed(1);\n\n";
+		echo "df.line" . $weights['id'] . "_mom.value = Number(line" . $weights['id'] . "_mom).toFixed(2);\n\n";
 
 		$momentlist[0] = $momentlist[0] . " -line" . $weights['id'] . "_mom";
 		$wtlist[0] = $wtlist[0] . " -line" . $weights['id'] . "_wt";
 	}
 }
 echo "var totmom_to = -1 * (" . print_r($momentlist[0],TRUE) . print_r($momentlist_to[0],TRUE) . ");\n";
-echo "df.totmom_to.value = totmom_to.toFixed(1);\n";
+echo "df.totmom_to.value = totmom_to.toFixed(2);\n";
 echo "var totmom_ldg = -1 * (" . print_r($momentlist[0],TRUE) . print_r($momentlist_ldg[0],TRUE) . ");\n";
-echo "df.totmom_ldg.value = totmom_ldg.toFixed(1);\n\n";
+echo "df.totmom_ldg.value = totmom_ldg.toFixed(2);\n\n";
 
 echo "var totwt_to = -1 * (" . print_r($wtlist[0],TRUE) . print_r($wtlist_to[0],TRUE) . ");\n";
-echo "df.totwt_to.value = totwt_to.toFixed(1);\n";
+echo "df.totwt_to.value = totwt_to.toFixed(2);\n";
 echo "var totwt_ldg = -1 * (" . print_r($wtlist[0],TRUE) . print_r($wtlist_ldg[0],TRUE) . ");\n";
-echo "df.totwt_ldg.value = totwt_ldg.toFixed(1);\n\n";
+echo "df.totwt_ldg.value = totwt_ldg.toFixed(2);\n\n";
 
 echo "var totarm_to = totmom_to / totwt_to;\n";
 echo "df.totarm_to.value = Math.round(totarm_to*100)/100;\n\n";
@@ -132,7 +132,7 @@ echo "document.getElementById(\"wbimage\").setAttribute(\"src\",\"scatter.php?ta
 if  (parseFloat(Math.round(totwt_to))>w1) {
         var message = "\nBased on the provided data,\n"
             message += "this aircraft will be overweight at takeoff!\n"
-       alert(message + "By " + overt + " lbs. ")
+       alert(message + "By " + overt + " kg")
         inuse_flag = false
     }
 

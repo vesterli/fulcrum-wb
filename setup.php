@@ -80,7 +80,7 @@ if (file_exists("config.inc") && $_REQUEST['func']=="") {
 			// Insert system settings into database
 			$sql_query = "INSERT INTO `configuration` (`id`, `item`, `value`) "
 			.    "VALUES (1, 'site_name', '" . $_REQUEST['site_name'] . "'), (2, 'administrator', '" . $_REQUEST['administrator'] . "'), (3, 'timezone', '" . $_REQUEST['timezone'] . "'), "
-			.    "(4, 'db_version', '" . $ver . "');";
+			.    "(4, 'db_version', '" . $dbver . "');";
 			mysqli_query($con,$sql_query);
 
 			echo("<p>Create an administrative user.</p>\n"
