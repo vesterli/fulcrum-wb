@@ -26,7 +26,7 @@ echo "<body>\n";
 // Verify database version OK
 if ($dbver != $config['db_version'] && $loginlevel=="1") {
 	echo "<div style=\"text-align: center; background-color: #FFFF80\">\n";
-	echo "Setup error: Fulcrum database is version #" . $config['db_version'] . "#, expected #" . $dbver . "#.<br>\n";
+	echo "Setup error: Fulcrum database is version " . $config['db_version'] . ", expected " . $dbver . ".<br>\n";
 	echo "Please update the database. <br>\n";
 	echo "</div>\n";
 }
