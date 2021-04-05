@@ -12,7 +12,7 @@ It is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by
 * MySQL/MariaDB
 
 ## Download
-[Download version 0.8.1](https://github.com/vesterli/fulcrum-wb/archive/v0.8.1.zip)
+[Download version 0.9 beta](https://github.com/vesterli/fulcrum-wb/archive/v0.9.zip)
 
 ## Installation
 1. Download the code
@@ -24,7 +24,7 @@ It is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by
 
 ## Updating
 
-# Code update
+### Code update
 If the update does not affect the database, do the following:
 1. Change setup.php to mode 755 (rwxr-xr-x)
 2. Overwrite all files on the server with the new version
@@ -32,7 +32,7 @@ If the update does not affect the database, do the following:
 The config.func file contains the connect information and will not be overwritten. The new code will thus
 inherit the existing database connection and tables
 
-# Code and database update
+### Code and database update
 When a version is released that changes the database, it will come with a separate update.php file that you need to run after installing the code.
 
 ## Re-Installation
