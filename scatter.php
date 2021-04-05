@@ -18,13 +18,19 @@ while($row = mysqli_fetch_array($result)) {
 	$plot_envelope = $plot_envelope . "[" . $row['arm'] . ", " . $row['weight'] . ", null, null],\n";
 }
 	// We have to add the first point back to the end so we have a connected graph
-	$arm[] = $arm[0];
-	$weight[] = $weight[0];
-	$plot_envelope = $plot_envelope . "[" . $arm[0] . ", " . $weight[0] . ", null, null]";
-
+	// Only add it if there is anything to add it to, to avoid undef var error
+	if(isset($arm)) {
+		$arm[] = $arm[0];
+	}
+	if(isset($weight)) {
+		$weight[] = $weight[0];
+	}
+	if(isset($arm) && isset($weight)) {
+		// if we have any data, plot envelope
+		$plot_envelope = $plot_envelope . "[" . $arm[0] . ", " . $weight[0] . ", null, null]";
+	}
 // NEW CODE HERE ///////////////////////////////////////////////////////////////
 ?>
-
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <?php
 	if ($chart_size=="small") {
@@ -49,14 +55,17 @@ function drawBackgroundColor() {
   data.addColumn('number', 'CG Envelope');
   data.addColumn('number', 'Takeoff');
   data.addColumn('number', 'Landing');
+	<?php
+	  // only try to add data if we have any
+	  if (isset($plot_envelope) && $plot_envelope != "") {
+			echo "data.addRows([\n";
+			echo $plot_envelope . ",\n";
+			echo "[" . $totarm_to . ", null, " . $totwt_to . ", null],\n";
+			echo "[" . $totarm_ldg . ", null, null, " . $totwt_ldg . "]\n";
+			echo "]);\n";
+		}
+	?>
 
-  data.addRows([
-<?php
-		echo $plot_envelope . ",\n";
-		echo "[" . $totarm_to . ", null, " . $totwt_to . ", null],\n";
-		echo "[" . $totarm_ldg . ", null, null, " . $totwt_ldg . "]\n";
-		?>
-  ]);
 
   var options = {
     hAxis: {
@@ -109,17 +118,13 @@ function drawBackgroundColor() {
     pointSize: 5
   };
 
-  var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-
-/*
-	// Wait for the chart to finish drawing before calling the getImageURI() method.
-	google.visualization.events.addListener(chart, 'ready', function () {
-		chart_div.innerHTML = '<img src="' + chart.getImageURI() + '">';
-		console.log(chart_div.innerHTML);
-	});
-*/
-
-  chart.draw(data, options);
+<?php
+  if (isset($plot_envelope)) {
+  	echo "var chart = new google.visualization.LineChart(document.getElementById('chart_div'));";
+		echo "chart.draw(data, options);";
+	}
+?>
 }
+
 
 </script>
