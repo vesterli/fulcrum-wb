@@ -191,10 +191,37 @@ if (isset($_REQUEST["func"])) {
               // create the new aircraft
               $aircraft_result = mysqli_query($con, "SELECT * FROM aircraft WHERE id='" . $_REQUEST['tailnumber'] . "'");
               $aircraft = mysqli_fetch_assoc($aircraft_result);
-              mysqli_query($con, "INSERT INTO aircraft (`active`, `tailnumber`, `makemodel`, `emptywt`, `emptycg`, `maxwt`, `cglimits`, `cgwarnfwd`, `cgwarnaft`) VALUES "
-              . "('0', '" . $_REQUEST['newtailnumber'] . "', '" . $_REQUEST['newmakemodel'] . "', '" . $aircraft['emptywt'] . "', '" . $aircraft['emptycg'] . "', '" . $aircraft['maxwt'] . "', '" . $aircraft['cglimits']
-              . "', '" . $aircraft['cgwarnfwd'] . "', '" . $aircraft['cgwarnaft'] . "');");
 
+              foreach($aircraft as $item){
+                  echo $item . "\n";
+              }
+              if (!mysqli_query($con,
+                "INSERT INTO aircraft (
+                  `active`
+                , `tailnumber`
+                , `makemodel`
+                , `emptywt`
+                , `emptycg`
+                , `maxwt`
+                , `cglimits`
+                , `cgwarnfwd`
+                , `cgwarnaft`
+                , `fuelunit`
+                ) VALUES (
+                  '0'
+                , '" . $_REQUEST['newtailnumber'] . "'
+                , '" . $_REQUEST['newmakemodel'] . "'
+                , '" . $aircraft['emptywt'] . "'
+                , '" . $aircraft['emptycg'] . "'
+                , '" . $aircraft['maxwt'] . "'
+                , '" . $aircraft['cglimits']. "'
+                , '" . $aircraft['cgwarnfwd'] . "'
+                , '" . $aircraft['cgwarnaft'] . "'
+                , '" . $aircraft['fuelunit'] . "'
+                );"
+              )) {
+                error_log("Error duplicating: " . mysqli_error($con));
+              }
               // get id of new aircraft
               $aircraft_result = mysqli_query($con, "SELECT * FROM aircraft WHERE tailnumber ='" . $_REQUEST['newtailnumber'] . "' ORDER BY id DESC LIMIT 1");
               $aircraft_new = mysqli_fetch_assoc($aircraft_result);
@@ -600,7 +627,7 @@ if (isset($_REQUEST["func"])) {
 
 					      echo "<div class=\"titletext\">Audit Log Module</div>";
 					      echo "<div style=\"font-family: courier; font-size: 10px;\">";
-					      if ($_REQUEST['offset']=="") {
+					      if (!isset($_REQUEST['offset']) || $_REQUEST['offset']=="") {
 				          $lower=0;
 					      } else {
 				          $lower=$_REQUEST['offset'];
