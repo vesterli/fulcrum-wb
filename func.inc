@@ -36,7 +36,14 @@ function PageHeader($site_name) {
 	.titletext {color: #17365D; font-size: 24px;}
 	.readonly {background-color: #CCCCCC;}
 	.numbers {text-align: right; width: 70px;}
-	.numbergals {text-align: right; width: 40px;}
+	.numbergals {text-align: right; width: 40px; margin-right: 5px;}
+	input.hidearrows::-webkit-outer-spin-button, input.hidearrows::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	input.hidearrows{
+		-moz-appearance: textfield;
+	}
 	@media print { .noprint { display: none; } }
 	#toolbar
 		{width: 700px; left: 0px; right: 0px; height: 35px; position:fixed; bottom:0px; margin-right: auto; margin-left: auto; z-index:100; background-color: #00304E; color: white;}
