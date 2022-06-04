@@ -50,6 +50,13 @@ $weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnu
                    echo($_REQUEST["line" . $weights['id'] . "_gallons_to"]);
                }
                echo ";\n";
+               echo "df.line" . $weights['id'] . "_liters_to.value = ";
+               if (empty($_REQUEST["line" . $weights['id'] . "_gallons_to"])) {
+                   echo($weights['weight']);
+               } else {
+                   echo(number_format((int)$_REQUEST["line" . $weights['id'] . "_gallons_to"] * 3.78541178, 1));
+               }
+               echo ";\n";
                echo "df.line" . $weights['id'] . "_wt_to.value = ";
                if (empty($_REQUEST["line" . $weights['id'] . "_gallons_to"])) {
                    echo(($weights['weight'] * $weights['fuelwt']));
@@ -62,6 +69,13 @@ $weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnu
                    echo($weights['weight']);
                } else {
                    echo($_REQUEST["line" . $weights['id'] . "_gallons_ldg"]);
+               }
+               echo ";\n";
+               echo "df.line" . $weights['id'] . "_liters_ldg.value = ";
+               if (empty($_REQUEST["line" . $weights['id'] . "_gallons_ldg"])) {
+                   echo($weights['weight']);
+               } else {
+                   echo(number_format((int)$_REQUEST["line" . $weights['id'] . "_gallons_ldg"] * 3.78541178, 1));
                }
                echo ";\n";
                echo "df.line" . $weights['id'] . "_wt_ldg.value = ";
@@ -96,12 +110,14 @@ $weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnu
            echo "var line" . $weights['id'] . "_arm = Number(df.line" . $weights['id'] ."_arm.value);" . "\n";
            if ($weights['fuel']=="true") {
                echo "var line" . $weights['id'] . "_gallons_to = df.line" . $weights['id'] . "_gallons_to.value;\n";
+               echo "df.line" . $weights['id'] . "_liters_to.value = (line" . $weights['id'] . "_gallons_to * 3.78541178).toFixed(1);\n";
                echo "var line" . $weights['id'] . "_wt_to = line" . $weights['id'] . "_gallons_to * " . $weights['fuelwt'] . ";\n";
                echo "df.line" . $weights['id'] . "_wt_to.value = (line" . $weights['id'] . "_gallons_to * " . $weights['fuelwt'] . ").toFixed(2);\n";
                echo "var line" . $weights['id'] . "_mom_to = line" . $weights['id'] . "_wt_to * line" . $weights['id'] . "_arm;\n";
                echo "df.line" . $weights['id'] . "_mom_to.value = line" . $weights['id'] . "_mom_to.toFixed(2);\n";
 
                echo "var line" . $weights['id'] . "_gallons_ldg = df.line" . $weights['id'] . "_gallons_ldg.value;\n";
+               echo "df.line" . $weights['id'] . "_liters_ldg.value = (line" . $weights['id'] . "_gallons_ldg * 3.78541178).toFixed(1);\n";
                echo "var line" . $weights['id'] . "_wt_ldg = line" . $weights['id'] . "_gallons_ldg * " . $weights['fuelwt'] . ";\n";
                echo "df.line" . $weights['id'] . "_wt_ldg.value = (line" . $weights['id'] . "_gallons_ldg * " . $weights['fuelwt'] . ").toFixed(2);\n";
                echo "var line" . $weights['id'] . "_mom_ldg = line" . $weights['id'] . "_wt_ldg * line" . $weights['id'] . "_arm;\n";
@@ -259,39 +275,47 @@ isamap[3] = "_dn"
   </tr>
 
 <?php
-
 $weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnumber = " . $aircraft['id'] . " ORDER BY  `aircraft_weights`.`order` ASC");
-       while ($weights = mysqli_fetch_assoc($weights_query)) {
-           echo "<tr><td";
-           if ($weights['fuel']=="false") {
-               echo " colspan=\"2\"";
-           }
-           echo ">" . $weights['item'] . "</td>\n";
-           if ($weights['fuel']=="true") {
-               echo "<td style=\"text-align: center;\">";
-               echo "<div style=\"display: inline-block; width: 50px;\"><input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_gallons_to\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbergals\"></div><div style=\"display: inline-block; width: 120px;\">" . $aircraft['fuelunit'] . " Takeoff</div><br>\n";
-               echo "<div style=\"display: inline-block; width: 50px;\"><input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_gallons_ldg\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbergals\"></div><div style=\"display: inline-block; width: 120px;\">" . $aircraft['fuelunit'] . " Landing</div>";
-               $tabindex++;
-               echo "</td>\n";
-               echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_wt_to\" readonly class=\"readonly numbers\"> kg</div>";
-               echo "<div><input type=\"number\" name=\"line" . $weights['id'] . "_wt_ldg\" readonly class=\"readonly numbers\"> kg</div></td>\n";
-           } else {
-               if ($weights['emptyweight']=="true") {
-                   echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_wt\" readonly class=\"readonly numbers\"> kg</td>\n";
-               } else {
-                   echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_wt\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbers\"> kg</td>\n";
-               }
-           }
-           echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_arm\" readonly class=\"readonly numbers\"></td>\n";
-           if ($weights['fuel']=="true") {
-               echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom_to\" readonly class=\"readonly numbers\">";
-               echo "\n</div><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom_ldg\" readonly class=\"readonly numbers\">";
-           } else {
-               echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom\" readonly class=\"readonly numbers\">";
-           }
-           echo "</div></td></tr>\n\n";
-           $tabindex++;
-       } ?>
+    while ($weights = mysqli_fetch_assoc($weights_query)) {
+        echo "<tr><td";
+        if ($weights['fuel']=="false") {
+            echo " colspan=\"2\"";
+        }
+        echo ">" . $weights['item'] . "</td>\n";
+        if ($weights['fuel']=="true") {
+            echo "<td>";
+            echo "<div style=\"display: flex; flex-direction: row; font-size: 10pt;\">";
+            echo "<div style=\"width: 50%;\">";
+            echo "<input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_gallons_to\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbergals\"><span>" . $aircraft['fuelunit'] . " Takeoff</span><br>\n";
+            echo "<input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_gallons_ldg\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbergals\"><span>" . $aircraft['fuelunit'] . " Landing</span>";
+            echo "</div>";
+            if ($aircraft['fuelunit']=="Gallons") {
+                echo "<div style=\"width: 50%;\">";
+                echo "<input type=\"number\" class=\"numbergals readonly hidearrows\" name=\"line" . $weights['id'] . "_liters_to\" readonly><span>Liters Takeoff</span><br>\n";
+                echo "<input type=\"number\" class=\"numbergals readonly hidearrows\" name=\"line" . $weights['id'] . "_liters_ldg\" readonly><span>Liters Landing</span>";
+                echo "</div>";
+            }
+            $tabindex++;
+            echo "</td>\n";
+            echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_wt_to\" readonly class=\"readonly numbers\"> kg</div>";
+            echo "<div><input type=\"number\" name=\"line" . $weights['id'] . "_wt_ldg\" readonly class=\"readonly numbers\"> kg</div></td>\n";
+        } else {
+            if ($weights['emptyweight']=="true") {
+                echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_wt\" readonly class=\"readonly numbers\"> kg</td>\n";
+            } else {
+                echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_wt\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbers\"> kg</td>\n";
+            }
+        }
+        echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_arm\" readonly class=\"readonly numbers\"></td>\n";
+        if ($weights['fuel']=="true") {
+            echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom_to\" readonly class=\"readonly numbers\">";
+            echo "\n</div><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom_ldg\" readonly class=\"readonly numbers\">";
+        } else {
+            echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom\" readonly class=\"readonly numbers\">";
+        }
+        echo "</div></td></tr>\n\n";
+        $tabindex++;
+    } ?>
 
 <tr style="background-color: #FFFF80">
 <td style="text-align: right; font-weight: bold;" colspan="2">Totals at Takeoff<br>Landing</td>
