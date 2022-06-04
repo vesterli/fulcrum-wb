@@ -11,7 +11,10 @@ if (isset($_REQUEST['func']) && $_REQUEST['func'] != "login") {
   $loginuser = $_SESSION["loginuser"];
   $loginpass = $_SESSION["loginpass"];
 
-  $login_query = mysqli_query($con, "SELECT * FROM users WHERE username ='" . $loginuser . "';");
+  $login_stmt = $con->prepare("SELECT * FROM users WHERE username = ?;");
+  $login_stmt->bind_param("s", $loginuser);
+  $login_stmt->execute();
+  $login_query = $login_stmt->get_result();
   $pass_verify = mysqli_fetch_assoc($login_query);
   if (password_verify($loginpass, $pass_verify['password'])) {
       $loginresult = mysqli_fetch_assoc($login_query);
