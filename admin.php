@@ -95,10 +95,14 @@ if (isset($_REQUEST["func"])) {
 				// we come from the system update form with func=system and func_do=update
         foreach ($_POST as $k=>$v) {
           if ($k!="func" && $k!="func_do") {
-            $sql_query = "UPDATE configuration SET `value` = '" . $v . "' WHERE `item` = '" . $k . "';";
-            mysqli_query($con, $sql_query);
+            $sql_update_stmt = $con->prepare("UPDATE configuration SET `value` = ? WHERE `item` = ?;");
+            $sql_update_stmt->bind_param("ss", $v, $k);
+            $sql_update_stmt->execute();
             // Enter audit log
-            mysqli_query($con, "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, '" . $loginuser . "', 'SYSTEM: " . addslashes($sql_query) . "');");
+            $sql_audit_stmt = $con->prepare("INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL,CURRENT_TIMESTAMP, ?, ?);");
+            $audit_text = "UPDATE configuration SET " . $k . " = " . $v;
+            $sql_audit_stmt->bind_param("ss", $loginuser, $audit_text);
+            $sql_audit_stmt->execute();
           }
         }
       	header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=system&message=updated');
