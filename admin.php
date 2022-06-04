@@ -192,9 +192,6 @@ if (isset($_REQUEST["func"])) {
               $aircraft_result = mysqli_query($con, "SELECT * FROM aircraft WHERE id='" . $_REQUEST['tailnumber'] . "'");
               $aircraft = mysqli_fetch_assoc($aircraft_result);
 
-              foreach($aircraft as $item){
-                  echo $item . "\n";
-              }
               if (!mysqli_query($con,
                 "INSERT INTO aircraft (
                   `active`
@@ -220,8 +217,9 @@ if (isset($_REQUEST["func"])) {
                 , '" . $aircraft['fuelunit'] . "'
                 );"
               )) {
-                error_log("Error duplicating: " . mysqli_error($con));
+                error_log("Error duplicating aircraft: " . mysqli_error($con));
               }
+
               // get id of new aircraft
               $aircraft_result = mysqli_query($con, "SELECT * FROM aircraft WHERE tailnumber ='" . $_REQUEST['newtailnumber'] . "' ORDER BY id DESC LIMIT 1");
               $aircraft_new = mysqli_fetch_assoc($aircraft_result);
@@ -229,9 +227,55 @@ if (isset($_REQUEST["func"])) {
               // duplicate the weights
               $weights_result = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnumber='" . $_REQUEST['tailnumber'] . "'");
               while ($row = mysqli_fetch_assoc($weights_result)) {
-                  mysqli_query($con, "INSERT INTO aircraft_weights (`tailnumber`, `order`, `item`, `weight`, `arm`, `emptyweight`, `fuel`, `fuelwt`) VALUES "
-                  . "('" . $aircraft_new['id'] . "', '" . $row['order'] . "', '" . $row['item'] . "', '" . $row['weight'] . "', '" . $row['arm'] . "', '" . $row['emptyweight'] . "', '"
-                  . $row['fuel'] . "', '" . $row['fuelwt'] . "');");
+                if(empty($row['fuelwt'])) {
+                  // if we don't have a fuel weight don't try to insert
+                  if(!mysqli_query($con,
+                    "INSERT INTO aircraft_weights (
+                      `tailnumber`
+                    , `order`
+                    , `item`
+                    , `weight`
+                    , `arm`
+                    , `emptyweight`
+                    , `fuel`
+                    ) VALUES (
+                        '" . $aircraft_new['id'] . "'
+                      , '" . $row['order'] . "'
+                      , '" . $row['item'] . "'
+                      , '" . $row['weight'] . "'
+                      , '" . $row['arm'] . "'
+                      , '" . $row['emptyweight'] . "'
+                      , '" . $row['fuel'] . "'
+                    );"
+                  )) {
+                    error_log("Error duplicating weight: " . mysqli_error($con));
+                  }
+                } else {
+                  //we do have fuel weight, insert
+                  if(!mysqli_query($con,
+                    "INSERT INTO aircraft_weights (
+                      `tailnumber`
+                    , `order`
+                    , `item`
+                    , `weight`
+                    , `arm`
+                    , `emptyweight`
+                    , `fuel`
+                    , `fuelwt`
+                    ) VALUES (
+                        '" . $aircraft_new['id'] . "'
+                      , '" . $row['order'] . "'
+                      , '" . $row['item'] . "'
+                      , '" . $row['weight'] . "'
+                      , '" . $row['arm'] . "'
+                      , '" . $row['emptyweight'] . "'
+                      , '" . $row['fuel'] . "'
+                      , '" . $row['fuelwt'] . "'
+                    );"
+                  )) {
+                    error_log("Error duplicating weight: " . mysqli_error($con));
+                  }
+                }
               }
 
               // duplicate the cg envelope
@@ -310,7 +354,7 @@ if (isset($_REQUEST["func"])) {
                 echo " selected";
               }
               echo ">Kilograms</option></select></td></tr>\n";
-              echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Edit\"></td></tr>\n";
+              echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Save\"></td></tr>\n";
               echo "</table></form><hr>\n\n";
 
               // Aicraft CG envelope
@@ -328,7 +372,7 @@ if (isset($_REQUEST["func"])) {
               while ($cg = mysqli_fetch_assoc($cg_result)) {
                 echo "<tr><td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"cgarm" . $cg['id'] . "\" value=\"" . $cg['arm'] . "\" class=\"numbers\"></td>\n"
                 .    "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"cgweight" . $cg['id'] . "\" value=\"" . $cg['weight'] . "\" class=\"numbers\"></td><td>\n"
-                .    "<input type=\"button\" value=\"Edit\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=cg&amp;id=" . $cg['id'] . "&amp;cgarm=' + document.cg.cgarm" . $cg['id'] . ".value + '&amp;cgweight=' + document.cg.cgweight" . $cg['id'] . ".value + '&amp;tailnumber=" . $aircraft['id'] . "'\">\n"
+                .    "<input type=\"button\" value=\"Save\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=cg&amp;id=" . $cg['id'] . "&amp;cgarm=' + document.cg.cgarm" . $cg['id'] . ".value + '&amp;cgweight=' + document.cg.cgweight" . $cg['id'] . ".value + '&amp;tailnumber=" . $aircraft['id'] . "'\">\n"
                 .    "<input type=\"button\" value=\"Delete\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=cg_del&amp;id=" . $cg['id'] . "&amp;tailnumber=" . $aircraft['id'] . "'\"></td></tr>\n";
               }
               echo "<tr><td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_arm\" class=\"numbers\"></td><td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_weight\" class=\"numbers\"></td><td style=\"text-align: center;\"><input type=\"submit\" value=\"Add\"></td></tr>\n";
@@ -368,7 +412,7 @@ if (isset($_REQUEST["func"])) {
                 }
                 echo "></td>\n<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"weight" . $weights['id'] . "\" value=\"" . $weights['weight'] . "\" class=\"numbers\"></td>\n"
                 .    "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"arm" . $weights['id'] . "\" value=\"" . $weights['arm'] . "\" class=\"numbers\"></td>\n"
-                .    "<td style=\"text-align: center;\"><input type=\"button\" value=\"Edit\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading&amp;id=" . $weights['id'] . "&amp;"
+                .    "<td style=\"text-align: center;\"><input type=\"button\" value=\"Save\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading&amp;id=" . $weights['id'] . "&amp;"
                 .    "order=' + document.loading.order" . $weights['id'] . ".value + '&amp;item=' + document.loading.item" . $weights['id'] . ".value + '&amp;emptyweight=' + document.loading.emptyweight" . $weights['id'] . ".checked + '&amp;"
                 .    "fuel=' + document.loading.fuel" . $weights['id'] . ".checked + '&amp;fuelwt=' + document.loading.fuelwt" . $weights['id'] . ".value + '&amp;weight=' + document.loading.weight" . $weights['id'] . ".value + '&amp;"
                 .    "arm=' + document.loading.arm" . $weights['id'] . ".value + '&amp;tailnumber=" . $aircraft['id'] . "'\">\n"
@@ -385,20 +429,27 @@ if (isset($_REQUEST["func"])) {
               echo "<input type=\"hidden\" name=\"func\" value=\"aircraft\">\n";
               echo "<input type=\"hidden\" name=\"func_do\" value=\"edit\">\n";
               AircraftListAll();
-              echo "<input type=\"submit\" value=\"Edit\"></form>\n\n";
+              echo "<input type=\"submit\" value=\"Select\"></form>\n\n";
       			}
     				break;
 
 					case "edit_do":
 						switch ($_REQUEST["what"]) {
 		      		case "basics":
+                if(!isset($_REQUEST['active'])) {
+                  $newActive = 0;
+                } else {
+                  $newActive = $_REQUEST['active'];
+                }
 		                // SQL query to edit basic aircraft information
-		                $sql_query = "UPDATE aircraft SET active = '" . $_REQUEST['active'] . "', tailnumber = '" . $_REQUEST['tailnumber'] . "', makemodel = '"
+		                $sql_query = "UPDATE aircraft SET active = '" . $newActive . "', tailnumber = '" . $_REQUEST['tailnumber'] . "', makemodel = '"
 		                . $_REQUEST['makemodel'] . "', emptywt = '" . $_REQUEST['emptywt'] . "', emptycg = '" . $_REQUEST['emptycg'] . "', maxwt = '" . $_REQUEST['maxwt']
 		                . "', cglimits = '" . $_REQUEST['cglimits'] . "', cgwarnfwd = '" . $_REQUEST['cgwarnfwd'] . "', cgwarnaft = '" . $_REQUEST['cgwarnaft']
 		                . "', fuelunit = '" . $_REQUEST['fuelunit'] . "' WHERE id = "
 		                . $_REQUEST['id'];
-		                mysqli_query($con, $sql_query);
+		                if (!mysqli_query($con, $sql_query)) {
+                      error_log("Error editing aircraft basics: " . mysqli_error($con));
+                    }
 		                // Enter in the audit log
 		                mysqli_query($con, "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, '" . $loginuser . "', '" . $_REQUEST['tailnumber'] . ": " . addslashes($sql_query) . "');");
 		                header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['id'] . '&message=updated');
