@@ -23,7 +23,10 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber']=="")) {
    } elseif (isset($_REQUEST['tailnumber'])) {
        // TAILNUMBER PROVIDED, VALIDATE
        // GET AIRCRAFT INFORMATION
-       $aircraft_result = mysqli_query($con, "SELECT * FROM aircraft WHERE id=" . $_REQUEST['tailnumber']);
+       $aircraft_result_stmt = $con->prepare("SELECT * FROM aircraft WHERE id=?;");
+       $aircraft_result_stmt->bind_param("i", $_REQUEST['tailnumber']);
+       $aircraft_result_stmt->execute();
+       $aircraft_result = $aircraft_result_stmt->get_result();
        $aircraft = mysqli_fetch_assoc($aircraft_result);
 
        if (mysqli_num_rows($aircraft_result)=="0") {
@@ -39,8 +42,10 @@ function WeightBal() {
 var df = document.forms[0];
 
 <?php
-
-$weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnumber = " . $aircraft['id'] . " ORDER BY 'order' ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt->bind_param("i", $aircraft['id']);
+  $weights_query_stmt->execute();
+  $weights_query = $weights_query_stmt->get_result();
        while ($weights = mysqli_fetch_assoc($weights_query)) {
            if ($weights['fuel']=="true") {
                echo "df.line" . $weights['id'] . "_gallons_to.value = ";
@@ -104,7 +109,10 @@ function Process() {
   var df = document.forms[0];
 
 <?php
-$weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnumber = " . $aircraft['id'] . " ORDER BY 'order' ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt->bind_param("i", $aircraft['id']);
+  $weights_query_stmt->execute();
+  $weights_query = $weights_query_stmt->get_result();
 
        while ($weights = mysqli_fetch_assoc($weights_query)) {
            echo "var line" . $weights['id'] . "_arm = Number(df.line" . $weights['id'] ."_arm.value);" . "\n";
@@ -242,7 +250,11 @@ isamap[3] = "_dn"
   <tr>
 	  <td colspan="4" rowspan="6">
       <?php echo "<div class=\"titletext\">" . $config['site_name'] . "<br>" . $aircraft['makemodel'] . " " . $aircraft['tailnumber'] . "</div>";
-       $updated_query = mysqli_query($con, "SELECT `timestamp` FROM `audit` WHERE `what` LIKE '%" . $aircraft['tailnumber'] . "%' ORDER BY `timestamp` DESC LIMIT 1");
+        $updated_query_stmt = $con->prepare("SELECT `timestamp` FROM `audit` WHERE `what` LIKE ? ORDER BY `timestamp` DESC LIMIT 1");
+        $bind_var_with_wildcards = "%" . $aircraft['tailnumber'] . "%";
+        $updated_query_stmt->bind_param("s", $bind_var_with_wildcards);
+        $updated_query_stmt->execute();
+       $updated_query = $updated_query_stmt->get_result();
        $updated = mysqli_fetch_assoc($updated_query);
        echo "Aircraft last updated: " . date("j M Y", strtotime($updated['timestamp'])-$timezoneoffset) . "<br>\n"; ?>
       <p><b>PILOT SIGNATURE  X__________________________________________________</b><br>
@@ -275,7 +287,10 @@ isamap[3] = "_dn"
   </tr>
 
 <?php
-$weights_query = mysqli_query($con, "SELECT * FROM aircraft_weights WHERE tailnumber = " . $aircraft['id'] . " ORDER BY  `aircraft_weights`.`order` ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt->bind_param("i", $aircraft['id']);
+  $weights_query_stmt->execute();
+  $weights_query = $weights_query_stmt->get_result();
     while ($weights = mysqli_fetch_assoc($weights_query)) {
         echo "<tr><td";
         if ($weights['fuel']=="false") {
