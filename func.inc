@@ -2,7 +2,7 @@
 require 'config.inc';
 
 /* VARIABLES */
-$ver = "1.0.4";
+$ver = "1.1.0";
 $dbver = "0.8.1";
 $tabindex=1;
 
