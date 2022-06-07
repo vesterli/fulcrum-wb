@@ -129,10 +129,28 @@ if (isset($_REQUEST["func"])) {
       			if (isset($_REQUEST["step"]) && $_REQUEST["step"]=="2") {
 							// step 2 means we have gathered data from new aircraft form and
 							// are ready to insert in database
+              $insert_aircraft_stmt = $con->prepare("INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
+              . " `emptycg`, `maxwt`, `cglimits`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) "
+              . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+              $insert_aircraft_stmt->bind_param("issssssss"
+              , $_REQUEST['tailnumber']
+              , $_REQUEST['makemodel']
+              , $_REQUEST['emptywt']
+              , $_REQUEST['emptycg']
+              , $_REQUEST['maxwt']
+              , $_REQUEST['cglimits']
+              , $_REQUEST['cgwarnfwd']
+              , $_REQUEST['cgwarnaft']
+              , $_REQUEST['fuelunit']
+              );
+              $insert_aircraft_stmt->execute();
+              /*
               $sql_query = "INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`, `emptycg`, `maxwt`, `cglimits`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) VALUES ('0', "
               .           "'" . $_REQUEST['tailnumber'] . "', '" . $_REQUEST['makemodel'] . "', '" . $_REQUEST['emptywt'] . "', '" . $_REQUEST['emptycg'] . "', '" . $_REQUEST['maxwt'] . "', "
               .           "'" . $_REQUEST['cglimits'] . "', '" . $_REQUEST['cgwarnfwd'] . "', '" . $_REQUEST['cgwarnaft'] . "', '" . $_REQUEST['fuelunit'] . "');";
               mysqli_query($con, $sql_query);
+              */
+              //TODO continue here
               $aircraft_result = mysqli_query($con, "SELECT * FROM `aircraft` WHERE `tailnumber` = '" . $_REQUEST['tailnumber'] . "' ORDER BY `id` DESC LIMIT 1");
               $aircraft = mysqli_fetch_assoc($aircraft_result);
               // Enter in the audit log
