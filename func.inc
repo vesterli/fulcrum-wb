@@ -1,9 +1,8 @@
 <?php
 require 'config.inc';
+require 'ver.inc';
 
 /* VARIABLES */
-$ver = "1.1.0";
-$dbver = "0.8.1";
 $tabindex=1;
 
 $con = mysqli_connect($dbserver,$dbuser,$dbpass,$dbname) or die(mysql_error());
@@ -11,9 +10,8 @@ $con = mysqli_connect($dbserver,$dbuser,$dbpass,$dbname) or die(mysql_error());
 
 $config_result = mysqli_query($con,"SELECT * FROM configuration;");
 while($config_row = mysqli_fetch_assoc($config_result)) {
-  $config{$config_row['item']}=$config_row['value'];
+  $config[$config_row['item']]=$config_row['value'];
 }
-
 
 function PageHeader($site_name) {
 	ob_start();
