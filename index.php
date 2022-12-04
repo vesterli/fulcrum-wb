@@ -1,5 +1,7 @@
-<?php include 'func.inc';
-   PageHeader($config['site_name']); ?>
+<?php 
+    include 'func.inc';
+    PageHeader($config['site_name']); 
+?>
 
 <?php
 if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber']=="")) {
