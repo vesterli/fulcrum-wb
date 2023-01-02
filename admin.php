@@ -5,8 +5,7 @@ session_start();
 ?>
 
 <?php
-// LOGIN CHECK
-
+// Login validation
 if (isset($_REQUEST['func']) && $_REQUEST['func'] != "login") {
   $loginuser = $_SESSION["loginuser"];
   $loginpass = $_SESSION["loginpass"];
@@ -34,9 +33,8 @@ if ($dbver != $config['db_version'] && $loginlevel == "1") {
   echo "</div>\n";
 }
 
-
+// Display system messages
 echo "<table style=\"width:700px; margin-left:auto; margin-right:auto;\"><tr><td>";
-
 if (isset($_REQUEST['sysmsg'])) {
   if ($_REQUEST['sysmsg'] == "logout") {
     echo "<p style=\"color: #00AA00; text-align: center;\">You have been logged out.</p>\n\n";
@@ -52,12 +50,11 @@ if (isset($_REQUEST['sysmsg'])) {
 }
 
 if (isset($_REQUEST["func"])) {
+  // there is a function to perform
   switch ($_REQUEST["func"]) {
     case "login":
       if (isset($_REQUEST['username']) && $_REQUEST['username'] != "") {
-        // login validation code here - stay logged in for a week
-        // setcookie("loginuser", $_REQUEST['username'], time()+604800);
-        // setcookie("loginpass", md5($_REQUEST['password']), time()+604800);
+        // user has submitted login form
         $_SESSION["loginuser"] = $_REQUEST['username'];
         $_SESSION["loginpass"] = $_REQUEST['password'];
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=login');
@@ -75,14 +72,13 @@ if (isset($_REQUEST["func"])) {
       break;
 
     case "logout":
-      //setcookie("loginuser", "", time()-3600);
-      //setcookie("loginpass", "", time()-3600);
       session_unset();
       session_destroy();
       header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=login&sysmsg=logout');
       break;
 
     case "system":
+      //verify user is superuser
       if ($loginlevel != "1") {
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=unauthorized');
       }
@@ -92,17 +88,14 @@ if (isset($_REQUEST["func"])) {
         echo "<p style=\"color: #00AA00; text-align: center;\">Settings Updated.</p>\n\n";
       }
       if (isset($_REQUEST["func_do"]) && $_REQUEST["func_do"] == "update") {
-        // we come from the system update form with func=system and func_do=update
+        // user has submitted system config changes
         foreach ($_POST as $k => $v) {
           if ($k != "func" && $k != "func_do") {
             $sql_update_stmt = $con->prepare("UPDATE configuration SET `value` = ? WHERE `item` = ?;");
             $sql_update_stmt->bind_param("ss", $v, $k);
             $sql_update_stmt->execute();
-            // Enter audit log
-            $sql_audit_stmt = $con->prepare("INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL,CURRENT_TIMESTAMP, ?, ?);");
             $audit_text = "UPDATE configuration SET " . $k . " = " . $v;
-            $sql_audit_stmt->bind_param("ss", $loginuser, $audit_text);
-            $sql_audit_stmt->execute();
+            AuditLog($loginuser, $audit_text);
           }
         }
         header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=system&message=updated');
@@ -680,6 +673,7 @@ if (isset($_REQUEST["func"])) {
 
     case "users":
       echo "<div class=\"titletext\">Users Module</div>";
+      // display any messages
       if (isset($_REQUEST['message'])) {
         if ($_REQUEST['message'] == "added") {
           echo "<p style=\"color: #00AA00; text-align: center;\">User account added.</p>\n\n";
@@ -689,158 +683,170 @@ if (isset($_REQUEST["func"])) {
           echo "<p style=\"color: #00AA00; text-align: center;\">User account deleted.</p>\n\n";
         }
       }
-      switch (isset($_REQUEST["func_do"]) && $_REQUEST["func_do"]) {
-        case "add":
-          if ($_REQUEST['what'] == "Add") {
-            // SQL to add a new user
-            $sql_query = "INSERT INTO users (`username`, `password`, `name`, `email`, `superuser`) VALUES (?, ?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql_query);
-            $password = md5($_REQUEST['password']);
-            mysqli_stmt_bind_param($stmt, "sssss", $_REQUEST['username'], $password, $_REQUEST['name'], $_REQUEST['email'], $_REQUEST['superuser']);
-            mysqli_stmt_execute($stmt);
 
-
-            // Enter in the audit log
-            $sql_query = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-            $stmt = mysqli_prepare($con, $sql_query);
-            mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
-            mysqli_stmt_execute($stmt);
-            header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=added');
-          } else {
-            echo "<form method=\"post\" action=\"admin.php\">\n"
-              . "<input type=\"hidden\" name=\"func\" value=\"users\">\n"
-              . "<input type=\"hidden\" name=\"func_do\" value=\"add\">\n"
-              . "<table style=\"width: 100%; border-style: none;\">\n"
-              . "<tr><td style=\"text-align: right; width: 50px;\">Username</td><td style=\"width: 50%\"><input type=\"text\" name=\"username\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">Password</td><td><input type=\"password\" name=\"password\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">Name</td><td><input type=\"text\" name=\"name\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">E-mail</td><td><input type=\"email\" name=\"email\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\"><abbr title=\"Administrative users can edit system settings, all users, and view the audit log.\">Admin User</abbr></td><td><input type=\"checkbox\" name=\"superuser\" value=\"1\"></td></tr>\n"
-              . "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" name=\"what\" value=\"Add\"></td></tr>\n"
-              . "</table></form>\n";
-          }
-          break;
-        case "edit":
-          if ($_REQUEST['what'] == "Edit") {
-            if ($_REQUEST['superuser'] == "1") {
-              $update_superuser = "1";
-            } else {
-              $update_superuser = "0";
-            }
-            // SQL to edit a user
-            $sql_query = "UPDATE users SET `username` = ?, `password` = ?, `name` = ?, `email` = ?, `superuser` = ? WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $sql_query);
-            $password_hash = password_hash($_REQUEST['password'], PASSWORD_DEFAULT);
-            mysqli_stmt_bind_param($stmt, "sssssi", $_REQUEST['username'], $password_hash, $_REQUEST['name'], $_REQUEST['email'], $update_superuser, $_REQUEST['id']);
-            mysqli_stmt_execute($stmt);
-
-            // Enter in the audit log
-            $log_entry = "USERS: " . addslashes($sql_query);
-            $sql_query = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-            $stmt = mysqli_prepare($con, $sql_query);
-            mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
-            mysqli_stmt_execute($stmt);
-            //				header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=edited');
-          } elseif ($_REQUEST['what'] == "Delete") {
-            $sql_query = "DELETE FROM users WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $sql_query);
-            mysqli_stmt_bind_param($stmt, "i", $_REQUEST['id']);
-            mysqli_stmt_execute($stmt);
-            
-            // Enter in the audit log
-            $log_entry = "USERS: " . addslashes($sql_query);
-            $sql_query = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-            $stmt = mysqli_prepare($con, $sql_query);
-            mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
-            mysqli_stmt_execute($stmt);header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=deleted');
-          } else {
-            $result = mysqli_prepare($con, "SELECT * FROM users WHERE id = ?");
-            mysqli_stmt_bind_param($result, "i", $_REQUEST['id']);
-            mysqli_stmt_execute($result);
-            $user_result = mysqli_stmt_get_result($result);
-            $user = mysqli_fetch_assoc($user_result);
-      
-            echo "<form method=\"post\" action=\"admin.php\">\n"
-              . "<input type=\"hidden\" name=\"id\" value=\"" . $user['id'] . "\">\n"
-              . "<input type=\"hidden\" name=\"func\" value=\"users\">\n"
-              . "<input type=\"hidden\" name=\"func_do\" value=\"edit\">\n"
-              . "<table style=\"width: 100%; border-style: none;\">\n"
-              . "<tr><td style=\"text-align: right; width: 50px;\">Username</td><td style=\"width: 50%\"><input type=\"text\" name=\"username\" value=\"" . $user['username'] . "\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">Password</td><td><input type=\"password\" name=\"password\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">Name</td><td><input type=\"text\" name=\"name\" value=\"" . $user['name'] . "\"></td></tr>\n"
-              . "<tr><td style=\"text-align: right\">E-mail</td><td><input type=\"email\" name=\"email\" value=\"" . $user['email'] . "\"></td></tr>\n";
-            if ($loginlevel == "1") {
-              echo "<tr><td style=\"text-align: right\"><abbr title=\"Administrative users can edit system settings, all users, and view the audit log.\">Admin User</abbr></td><td><input type=\"checkbox\" name=\"superuser\" value=\"1\"";
-              if ($row['superuser'] == "1") {
-                echo " checked";
+      if (isset($_REQUEST["func_do"])) {
+        // got an instruction to do something
+        switch ($_REQUEST["func_do"]) {
+          case "add":
+            if (isset($_REQUEST['what']) && $_REQUEST['what'] == "Add") {
+              // we got data for a new user account, add it to the database
+              $sql_query = "INSERT INTO users (`username`, `password`, `name`, `email`, `superuser`) VALUES (?, ?, ?, ?, ?);";
+              $stmt = mysqli_prepare($con, $sql_query);
+              $password = md5($_REQUEST['password']);
+              if (isset($_REQUEST['superuser'])) {
+                $superuser = 1;
+              } else {
+                $superuser = 0;
               }
-              echo "></td></tr>\n";
-            }
-            echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" name=\"what\" value=\"Edit\">"
-              . "<input type=\"submit\" name=\"what\" value=\"Delete\" onClick=\"return window.confirm('Are you REALLY sure you want to PERMANENTLY delete this account?');\"></td></tr>\n"
-              . "</table></form>\n";
-          }
-          break;
-        default:
-          echo "<p>This module edits system users.</p>\n";
-          echo "<form method=\"post\" action=\"admin.php\">\n";
-          echo "<input type=\"hidden\" name=\"func\" value=\"users\">\n";
-          echo "<input type=\"hidden\" name=\"func_do\" value=\"add\">\n";
-          echo "<table style=\"margin-left: auto; margin-right: auto;\">\n";
-          echo "<tr><th>Username</th><th>Name</th><th>Admin</th><th>&nbsp;</th></tr>\n";
-          $result = mysqli_query($con, "SELECT * FROM users ORDER BY `name`");
-          while ($row = mysqli_fetch_array($result)) {
-            echo "<tr><td>" . $row['username'] . "</td><td>" . $row['name'] . "</td><td>";
-            if ($row['superuser'] == "1") {
-              echo "Yes";
+              mysqli_stmt_bind_param($stmt, "sssss", $_REQUEST['username'], $password, $_REQUEST['name'], $_REQUEST['email'], $superuser);
+              mysqli_stmt_execute($stmt);
+              $log_entry = addslashes($sql_query);
+              AuditLog($loginuser, $log_entry);
+              // redirect backt to users page with addition confirmation message
+              header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=added');
             } else {
-              echo "No";
+              // request to add a user, show the Add form
+              echo "<form method=\"post\" action=\"admin.php\">\n"
+                . "<input type=\"hidden\" name=\"func\" value=\"users\">\n"
+                . "<input type=\"hidden\" name=\"func_do\" value=\"add\">\n"
+                . "<table style=\"width: 100%; border-style: none;\">\n"
+                . "<tr><td style=\"text-align: right; width: 50px;\">Username</td><td style=\"width: 50%\"><input type=\"text\" name=\"username\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">Password</td><td><input type=\"password\" name=\"password\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">Name</td><td><input type=\"text\" name=\"name\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">E-mail</td><td><input type=\"email\" name=\"email\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\"><abbr title=\"Administrative users can edit system settings, all users, and view the audit log.\">Admin User</abbr></td><td><input type=\"checkbox\" name=\"superuser\" value=\"1\"></td></tr>\n"
+                . "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" name=\"what\" value=\"Add\"></td></tr>\n"
+                . "</table></form>\n";
             }
-            echo "</td><td>\n";
-            if ($loginuser == $row['username'] || $loginlevel == "1") {
-              echo "<input type=\"button\" name=\"edit\" value=\"Edit\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=users&amp;func_do=edit&amp;id=" . $row['id'] . "'\">\n";
+            break;
+          case "edit":
+            if (isset($_REQUEST['what']) && $_REQUEST['what'] == "Save") {
+              // we got updated data for a user account, update database
+              if ($_REQUEST['superuser'] == "1") {
+                $update_superuser = "1";
+              } else {
+                $update_superuser = "0";
+              }
+              $sql_stmt = "UPDATE users SET `username` = ?, `password` = ?, `name` = ?, `email` = ?, `superuser` = ? WHERE id = ?";
+              $stmt = mysqli_prepare($con, $sql_stmt);
+              $password_hash = password_hash($_REQUEST['password'], PASSWORD_DEFAULT);
+              mysqli_stmt_bind_param($stmt, "sssssi", $_REQUEST['username'], $password_hash, $_REQUEST['name'], $_REQUEST['email'], $update_superuser, $_REQUEST['id']);
+              mysqli_stmt_execute($stmt);
+              $log_entry = "USERS: " . addslashes($sql_stmt);
+              AuditLog($loginuser, $log_entry);
+              // redirect back to users page with edit confirmation message
+              header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=edited');
+            } elseif (isset($_REQUEST['what']) && $_REQUEST['what'] == "Delete") {
+              // we got a request to delete a user account, delete it from the database
+              $sql_stmt = "DELETE FROM users WHERE id = ?";
+              $stmt = mysqli_prepare($con, $sql_stmt);
+              mysqli_stmt_bind_param($stmt, "i", $_REQUEST['id']);
+              mysqli_stmt_execute($stmt);
+              $log_entry = "USERS: " . addslashes($sql_stmt);
+              AuditLog($loginuser, $log_entry);
+              // redirect back to users page with delete confirmation message
+              header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=users&message=deleted');
             } else {
-              echo "&nbsp;";
+              // didn't get a form submission, show the Edit form with the user's data
+              $query = mysqli_prepare($con, "SELECT * FROM users WHERE id = ?");
+              mysqli_stmt_bind_param($query, "i", $_REQUEST['id']);
+              mysqli_stmt_execute($query);
+              $user_result = mysqli_stmt_get_result($query);
+              $user = mysqli_fetch_assoc($user_result);
+              echo "<form method=\"post\" action=\"admin.php\">\n"
+                . "<input type=\"hidden\" name=\"id\" value=\"" . $user['id'] . "\">\n"
+                . "<input type=\"hidden\" name=\"func\" value=\"users\">\n"
+                . "<input type=\"hidden\" name=\"func_do\" value=\"edit\">\n"
+                . "<table style=\"width: 100%; border-style: none;\">\n"
+                . "<tr><td style=\"text-align: right; width: 50px;\">Username2</td><td style=\"width: 50%\"><input type=\"text\" name=\"username\" value=\"" . $user['username'] . "\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">Password</td><td><input type=\"password\" name=\"password\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">Name</td><td><input type=\"text\" name=\"name\" value=\"" . $user['name'] . "\"></td></tr>\n"
+                . "<tr><td style=\"text-align: right\">E-mail</td><td><input type=\"email\" name=\"email\" value=\"" . $user['email'] . "\"></td></tr>\n";
+              if ($loginlevel == "1") {
+                echo "<tr><td style=\"text-align: right\"><abbr title=\"Administrative users can edit system settings, all users, and view the audit log.\">Admin User</abbr></td><td><input type=\"checkbox\" name=\"superuser\" value=\"1\"";
+                if ($user['superuser'] == "1") {
+                  echo " checked";
+                }
+                echo "></td></tr>\n";
+              }
+              echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" name=\"what\" value=\"Save\">"
+                . "&nbsp;&nbsp;&nbsp;"
+                . "<input type=\"submit\" name=\"what\" value=\"Delete\" onClick=\"return window.confirm('Are you REALLY sure you want to PERMANENTLY delete this account?');\"></td></tr>\n"
+                . "</table></form>\n";
             }
-            echo "</td></tr>\n";
+            break;
+          default:
+            break;
+        }
+      } else {
+        echo "<p>This module edits system users.</p>\n";
+        echo "<form method=\"post\" action=\"admin.php\">\n";
+        echo "<input type=\"hidden\" name=\"func\" value=\"users\">\n";
+        echo "<input type=\"hidden\" name=\"func_do\" value=\"add\">\n";
+        echo "<table style=\"margin-left: auto; margin-right: auto;\">\n";
+        echo "<tr><th>Username</th><th>Name</th><th>Admin</th><th>&nbsp;</th></tr>\n";
+        $result = mysqli_query($con, "SELECT * FROM users ORDER BY `name`");
+        while ($row = mysqli_fetch_array($result)) {
+          echo "<tr><td>" . $row['username'] . "</td><td>" . $row['name'] . "</td><td>";
+          if ($row['superuser'] == "1") {
+            echo "Yes";
+          } else {
+            echo "No";
           }
-          echo "</table></form>\n";
-          if ($loginlevel == "1") {
-            echo "<div style=\"text-align: center;\"><a href=\"admin.php?func=users&amp;func_do=add\">Add New User</a></div>\n";
+          echo "</td><td>\n";
+          if ($loginuser == $row['username'] || $loginlevel == "1") {
+            echo "<input type=\"button\" name=\"edit\" value=\"Edit\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=users&amp;func_do=edit&amp;id=" . $row['id'] . "'\">\n";
+          } else {
+            echo "&nbsp;";
           }
+          echo "</td></tr>\n";
+        }
+        echo "</table></form>\n";
+        if ($loginlevel == "1") {
+          echo "<div style=\"text-align: center;\"><a href=\"admin.php?func=users&amp;func_do=add\">Add New User</a></div>\n";
+        }
       }
+
       break;
 
     case "audit":
+      // only admins can view the audit log
       if ($loginlevel != "1") {
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=unauthorized');
       }
 
       echo "<div class=\"titletext\">Audit Log Module</div>";
+      echo "<br/>";
       echo "<div style=\"font-family: courier; font-size: 10px;\">";
+      // pagination
       if (!isset($_REQUEST['offset']) || $_REQUEST['offset'] == "") {
         $lower = 0;
       } else {
         $lower = $_REQUEST['offset'];
       }
       $upper = ($lower + 100);
-      $audit_query = mysqli_prepare($con, "SELECT * FROM audit ORDER BY timestamp DESC LIMIT ?, ?");
+
+      // get audit rows
+      $audit_query = mysqli_prepare($con, "SELECT * FROM audit ORDER BY id DESC LIMIT ?, ?");
       mysqli_stmt_bind_param($audit_query, "ii", $lower, $upper);
       mysqli_stmt_execute($audit_query);
       $audit_result = mysqli_stmt_get_result($audit_query);
-      $audit = mysqli_fetch_assoc($audit_result);
-    
-      $rowcount = mysqli_num_rows(mysqli_query($con, "SELECT * FROM audit"));
-      while ($row = mysqli_fetch_array($result)) {
+
+      // display audit rows
+      while ($row = mysqli_fetch_array($audit_result)) {
         echo $row['timestamp'] . " | " . $row['who'] . " | " . $row['what'] . "<br><br>\n";
       }
       echo "</div><div style=\"text-align: center;\">";
+
+      // pagination links
       if ($lower != 0) {
         echo "<a href=\"admin.php?func=audit&amp;offset=" . ($lower - 100) . "\">Previous Page</a> ";
       }
-      if ($rowcount > ($upper + 1)) {
+      $total_audit_rows = mysqli_num_rows(mysqli_query($con, "SELECT * FROM audit"));
+      if ($total_audit_rows > ($upper + 1)) {
         echo " <a href=\"admin.php?func=audit&amp;offset=" . ($upper) . "\">Next Page</a>";
       }
+
       echo "</div>\n\n";
       break;
 
