@@ -5,14 +5,14 @@ By Sten Vesterli (<sten@vesterli.com>) for use in Roskilde Flyveklub.
 ## Overview
 Fulcrum is a web-based aircraft weight and balance calculator with graphing. It has support for multiple aircraft and administrators. It has a W&B page with a graphical view of the envelope and a separate admin page for maintaining aircraft.
 
-It is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by Caleb Newville (<caleb@inetwiz.com>). At this time, 95% of the functionality is from that project.
+It is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by Caleb Newville (<caleb@inetwiz.com>). At this time, 80% of the functionality is from that project.
 
 ## Requirements
-* A web server with PHP 7
+* A web server with PHP 8
 * MySQL/MariaDB
 
 ## Download
-[Download version 1.1](https://github.com/vesterli/fulcrum-wb/archive/v1.1.zip)
+[Download version 1.2](https://github.com/vesterli/fulcrum-wb/archive/v1.2.zip)
 
 ## Installation
 1. Download the code
@@ -29,7 +29,7 @@ If the update does not affect the database, do the following:
 1. Change setup.php to mode 755 (rwxr-xr-x)
 2. Overwrite all files on the server with the new version
 3. Change setup.php back to mode 000 (---------)
-The config.func file contains the connect information and will not be overwritten. The new code will thus
+The config.func file on your server contains the connect information and will not be overwritten. The new code will thus
 inherit the existing database connection and tables
 
 ### Code and database update
