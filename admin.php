@@ -120,8 +120,7 @@ if (isset($_REQUEST["func"])) {
         switch ($_REQUEST["func_do"]) {
           case "add":
             if (isset($_REQUEST["step"]) && $_REQUEST["step"] == "2") {
-              // step 2 means we have gathered data from new aircraft form and
-              // are ready to insert in database
+              // step 2 means we have gathered data from new aircraft form and are ready to insert in database
               $insert_aircraft_stmt = $con->prepare("INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
                 . " `emptycg`, `maxwt`, `cglimits`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) "
                 . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?);");
@@ -338,11 +337,7 @@ if (isset($_REQUEST["func"])) {
               $log_entry = "DUPLICATE: (" . $aircraft['id'] . ", " . $aircraft['tailnumber'] . ", "
                 . $aircraft['makemodel'] . ") AS (" . $aircraft_new['id'] . ", " . $_REQUEST['newtailnumber']
                 . ", " . $_REQUEST['newmakemodel'] . ")";
-              $sql = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-              $stmt = mysqli_prepare($con, $sql);
-              mysqli_stmt_bind_param($stmt, "ss", $loginuser, $log_entry);
-              mysqli_stmt_execute($stmt);
-
+              AuditLog($loginuser, $log_entry);
 
               echo "<p>Aircraft duplicated, proceed to the <a href=\"admin.php?func=aircraft&amp;func_do=edit&amp;tailnumber=" . $aircraft_new['id'] . "\">edit</a> screen.</p>";
             } else {
@@ -422,8 +417,8 @@ if (isset($_REQUEST["func"])) {
               echo "<h3 style=\"text-align: center\">Center of Gravity Envelope</h3>\n";
               echo "<p style=\"text-align: center; font-size: 12px\">Enter the data points for the CG envelope.  It does not matter which point you start with or if you go clockwise or counter-clockwise, but they must be entered in order.  "
                 . "The last point will automatically be connected back to the first.  The graph below will update as you go.</p>\n";
-              // query aircraft cg envelope where tailnumber = $aircraft['id']
-              $sql = "SELECT * FROM aircraft_cg WHERE tailnumber = ? ORDER BY cg";
+              // get existing CG envelope
+              $sql = "SELECT * FROM aircraft_cg WHERE tailnumber = ?";
               $stmt = mysqli_prepare($con, $sql);
               mysqli_stmt_bind_param($stmt, "s", $aircraft['id']);
               mysqli_stmt_execute($stmt);
@@ -449,7 +444,7 @@ if (isset($_REQUEST["func"])) {
               // Aicraft loading zones
               echo "<h3 style=\"text-align: center\">Loading Zones</h3>\n";
               echo "<p style=\"text-align: center; font-size: 12px\">Enter the data for each reference datum.  A description of what should be entered in each field is available by hovering over the column name.</p>\n";
-              // query aircraft weights where tailnumber = $aircraft['id'] order by aircraft_weights.order
+              // get existing loading zones 
               $sql = "SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY aircraft_weights.order";
               $stmt = mysqli_prepare($con, $sql);
               mysqli_stmt_bind_param($stmt, "s", $aircraft['id']);
@@ -514,23 +509,20 @@ if (isset($_REQUEST["func"])) {
                 } else {
                   $newActive = $_REQUEST['active'];
                 }
-                // SQL query to edit basic aircraft information
+                // SQL statement to edit basic aircraft information
                 $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?, cglimits = ?, cgwarnfwd = ?, cgwarnaft = ?, fuelunit = ? WHERE id = ?";
                 $stmt = mysqli_prepare($con, $sql);
-                mysqli_stmt_bind_param($stmt, "sssssssssi", $newActive, $_REQUEST['tailnumber'], $_REQUEST['makemodel'], $_REQUEST['emptywt'], $_REQUEST['emptycg'], $_REQUEST['maxwt'], $_REQUEST['cglimits'], $_REQUEST['cgwarnfwd'], $_REQUEST['cgwarnaft'], $_REQUEST['fuelunit'], $_REQUEST['id']);
+                mysqli_stmt_bind_param($stmt, "ssssssssssi", $newActive, $_REQUEST['tailnumber'], $_REQUEST['makemodel'], $_REQUEST['emptywt'], $_REQUEST['emptycg'], $_REQUEST['maxwt'], $_REQUEST['cglimits'], $_REQUEST['cgwarnfwd'], $_REQUEST['cgwarnaft'], $_REQUEST['fuelunit'], $_REQUEST['id']);
                 $sql_query = mysqli_stmt_execute($stmt);
 
                 if (!$sql_query) {
                   error_log("Error editing aircraft basics: " . mysqli_error($con));
 
                 }
-                // Enter in the audit log
-                $log_entry = $_REQUEST['tailnumber'] . ": " . addslashes($sql_query);
-                $sql = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-                $stmt = mysqli_prepare($con, $sql);
-                mysqli_stmt_bind_param($stmt, "ss", $loginuser, $log_entry);
-                mysqli_stmt_execute($stmt);
 
+                $log_entry = $_REQUEST['tailnumber'] . ": " . addslashes($sql_query);
+                AuditLog($loginuser, $log_entry);
+                // redirect back to edit page with message
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['id'] . '&message=updated');
                 break;
               case "cg":
@@ -598,37 +590,97 @@ if (isset($_REQUEST["func"])) {
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
               // no break
               case "loading":
-                if ($_REQUEST['new_item'] && $_REQUEST['new_arm'] != "") {
+                if (
+                  isset($_REQUEST['new_order']) && $_REQUEST['new_order']
+                  && isset($_REQUEST['new_item']) && $_REQUEST['new_item']
+                  && isset($_REQUEST['new_arm']) && $_REQUEST['new_arm'] != ""
+                ) {
+                  // we have enough data to add a line
+                  // set emptyweight based on checkbox 
+                  if (isset($_REQUEST['new_emptyweight']) && $_REQUEST['new_emptyweight'] == "true") {
+                    $new_emptyweight = 'true';
+                  } else {
+                    $new_emptyweight = 'false';
+                  }
+                  // check if new fuel checkbox is set
+                  if (isset($_REQUEST['new_fuel']) && $_REQUEST['new_fuel'] == "true") {
+                    $new_fuel = 'true';
+                    if (isset($_REQUEST['new_fuelwt'])) {
+                      $new_fuelwt = $_REQUEST['new_fuelwt'];
+                    } else {
+                      $new_fuelwt = 0;
+                    }
+                  } else {
+                    $new_fuel = 'false';
+                  }
+                  // Get weight or set to zero if not set
+                  if (isset($_REQUEST['new_weight']) && $_REQUEST['new_weight'] != "") {
+                    $new_weight = $_REQUEST['new_weight'];
+                  } else {
+                    $new_weight = 0;
+                  }
                   // SQL  to add a new loading line
-                  $sql_query = "INSERT INTO aircraft_weights (id, tailnumber, order, item, weight, arm, emptyweight, fuel, fuelwt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                  $sql_query = "INSERT INTO aircraft_weights "
+                    . "(`id`, `tailnumber`, `order`, `item`, `weight`, `arm`, `emptyweight`, `fuel`, `fuelwt`)"
+                    . " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                   $stmt = mysqli_prepare($con, $sql_query);
-                  mysqli_stmt_bind_param($stmt, 'iisssssss', $_REQUEST['id'], $_REQUEST['tailnumber'], $_REQUEST['new_order'], $_REQUEST['new_item'], $_REQUEST['new_weight'], $_REQUEST['new_arm'], $_REQUEST['new_emptyweight'], $_REQUEST['new_fuel'], $_REQUEST['new_fuelwt']);
+                  mysqli_stmt_bind_param(
+                    $stmt,
+                    'iisssssss',
+                    $_REQUEST['id'], $_REQUEST['tailnumber'], $_REQUEST['new_order'],
+                    $_REQUEST['new_item'],
+                    $new_weight, $_REQUEST['new_arm'],
+                    $new_emptyweight,
+                    $new_fuel,
+                    $new_fuelwt
+                  );
                   mysqli_stmt_execute($stmt);
 
-                  // Enter in the audit log
-                  $aircraft_query = mysqli_prepare($con, "SELECT * FROM aircraft WHERE id = ?");
-                  mysqli_stmt_bind_param($aircraft_query, 'i', $_REQUEST['tailnumber']);
-                  mysqli_stmt_execute($aircraft_query);
-                  $aircraft_result = mysqli_stmt_get_result($aircraft_query);
-                  $aircraft = mysqli_fetch_array($aircraft_result);
                   $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
+                  AuditLog($loginuser, $log_entry);
 
-                  $sql_query = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-                  $stmt = mysqli_prepare($con, $sql_query);
-                  mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
-                  mysqli_stmt_execute($stmt);
+                  // redirect back with message
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 } else {
+                  // no data in the new line, just update the existing lines
+                  // set emptyweight based on checkbox 
+                  if (isset($_REQUEST['emptyweight']) && $_REQUEST['emptyweight'] == "true") {
+                    $emptyweight = 'true';
+                  } else {
+                    $emptyweight = 'false';
+                  }
+                  // check if fuel checkbox is set
+                  if (isset($_REQUEST['fuel']) && $_REQUEST['fuel'] == "true") {
+                    $fuel = 'true';
+                  } else {
+                    $fuel = 'false';
+                  }
+                  // Get fuelweight or set to zero if not set
+                  if (isset($_REQUEST['fuelwt']) && $_REQUEST['fuelwt'] != "") {
+                    $fuelwt = $_REQUEST['fuelwt'];
+                  } else {
+                    $weight = 0;
+                  }
                   // SQL  to edit loading zones
-                  $sql_query = "UPDATE aircraft_weights SET `order` = ?, `item` = ?, `weight` = ?, `arm` = ?, `emptyweight` = ?, `fuel` = ?, `fuelwt` = ? WHERE id = ?";
+                  $sql_query = "UPDATE aircraft_weights "
+                    . "SET `order` = ?, `item` = ?, `weight` = ?, "
+                    . "`arm` = ?, `emptyweight` = ?, `fuel` = ?, "
+                    . "`fuelwt` = ? WHERE id = ?";
                   $stmt = mysqli_prepare($con, $sql_query);
-                  mysqli_stmt_bind_param($stmt, 'sssssssi', $_REQUEST['order'], $_REQUEST['item'], $_REQUEST['weight'], $_REQUEST['arm'], $_REQUEST['emptyweight'], $_REQUEST['fuel'], $_REQUEST['fuelwt'], $_REQUEST['id']);
+                  mysqli_stmt_bind_param(
+                    $stmt,
+                    'sssssssi',
+                    $_REQUEST['order'], $_REQUEST['item'], $_REQUEST['weight'],
+                    $_REQUEST['arm'],
+                    $emptyweight,
+                    $fuel,
+                    $fuelwt, $_REQUEST['id']
+                  );
                   mysqli_stmt_execute($stmt);
 
-                  // Enter in the audit log
-                  $aircraft_query = mysqli_query($con, "SELECT * FROM aircraft WHERE id = " . $_REQUEST['tailnumber']);
-                  $aircraft = mysqli_fetch_assoc($aircraft_query);
-                  mysqli_query($con, "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, '" . $loginuser . "', '" . $aircraft['tailnumber'] . ": " . addslashes($sql_query) . "');");
+                  $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
+                  AuditLog($loginuser, $log_entry);
+                  // redirect back with messqage
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 }
                 break;
