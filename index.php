@@ -341,7 +341,6 @@ isamap[3] = "_dn"
 <td style="text-align: center;"><div><input type="number" name="totmom_to" readonly class="readonly numbers"></div><div><input type="number" name="totmom_ldg" readonly class="readonly numbers"></div></td>
 </tr>
 
-<tr style="background-color: #FFFF80"><td colspan="5"><span style="font-weight: bold;">CG limits: </span><span style="font-family: monospace"><?php echo $aircraft['cglimits']; ?></span></td></tr>
 </table>
 
 <?php

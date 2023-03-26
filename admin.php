@@ -122,7 +122,7 @@ if (isset($_REQUEST["func"])) {
             if (isset($_REQUEST["step"]) && $_REQUEST["step"] == "2") {
               // step 2 means we have gathered data from new aircraft form and are ready to insert in database
               $insert_aircraft_stmt = $con->prepare("INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
-                . " `emptycg`, `maxwt`, `cglimits`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) "
+                . " `emptycg`, `maxwt`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) "
                 . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?);");
               $insert_aircraft_stmt->bind_param(
                 "issssssss"
@@ -131,7 +131,6 @@ if (isset($_REQUEST["func"])) {
                 , $_REQUEST['emptywt']
                 , $_REQUEST['emptycg']
                 , $_REQUEST['maxwt']
-                , $_REQUEST['cglimits']
                 , $_REQUEST['cgwarnfwd']
                 , $_REQUEST['cgwarnaft']
                 , $_REQUEST['fuelunit']
@@ -162,7 +161,6 @@ if (isset($_REQUEST["func"])) {
               echo "<tr><td style=\"text-align: right\">Empty Weight</td><td><input type=\"number\" step=\"any\" name=\"emptywt\" class=\"numbers\" value=\"1556.3\" onfocus=\"javascript:if(this.value=='1556.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='1556.3'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Empty CG</td><td><input type=\"number\" step=\"any\" name=\"emptycg\" class=\"numbers\" value=\"38.78\" onfocus=\"javascript:if(this.value=='38.78') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='38.78'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Maximum Gross Weight</td><td><input type=\"number\" step=\"any\" name=\"maxwt\" class=\"numbers\" value=\"2550\" onfocus=\"javascript:if(this.value=='2550') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='2550'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\"><abbr title=\"This is a text description of the center of gravity limits, it is not used in part of the validation/warning process.\">Textual CG Limits</abbr></td><td><input type=\"text\" name=\"cglimits\" value=\"FWD 35 @ 1600 - 35 @ 1950 - 39.5 @ 2550, AFT 47.3\" onfocus=\"javascript:if(this.value=='FWD 35 @ 1600 - 35 @ 1950 - 39.5 @ 2550, AFT 47.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='FWD 35 @ 1600 - 35 @ 1950 - 39.5 @ 2550, AFT 47.3'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is less than this value.\">Forward CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnfwd\" class=\"numbers\" value=\"35\" onfocus=\"javascript:if(this.value=='35') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='35'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is greater than this value.\">Aft CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnaft\" class=\"numbers\" value=\"47.3\" onfocus=\"javascript:if(this.value=='47.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='47.3'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Fuel Unit</td><td><select name=\"fuelunit\"><option value=\"Gallons\">Gallons</option><option value=\"Liters\">Liters</option><option value=\"Pounds\">Pounds</option><option value=\"Kilograms\">Kilograms</option></select></td></tr>\n";
@@ -228,7 +226,6 @@ if (isset($_REQUEST["func"])) {
                 , `emptywt`
                 , `emptycg`
                 , `maxwt`
-                , `cglimits`
                 , `cgwarnfwd`
                 , `cgwarnaft`
                 , `fuelunit`
@@ -239,7 +236,6 @@ if (isset($_REQUEST["func"])) {
                 , '" . $aircraft['emptywt'] . "'
                 , '" . $aircraft['emptycg'] . "'
                 , '" . $aircraft['maxwt'] . "'
-                , '" . $aircraft['cglimits'] . "'
                 , '" . $aircraft['cgwarnfwd'] . "'
                 , '" . $aircraft['cgwarnaft'] . "'
                 , '" . $aircraft['fuelunit'] . "'
@@ -390,7 +386,6 @@ if (isset($_REQUEST["func"])) {
               echo "<tr><td style=\"text-align: right\">Empty Weight</td><td><input type=\"number\" step=\"any\" name=\"emptywt\" class=\"numbers\" value=\"" . $aircraft['emptywt'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Empty CG</td><td><input type=\"number\" step=\"any\" name=\"emptycg\" class=\"numbers\" value=\"" . $aircraft['emptycg'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Maximum Gross Weight</td><td><input type=\"number\" step=\"any\" name=\"maxwt\" class=\"numbers\" value=\"" . $aircraft['maxwt'] . "\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\"><abbr title=\"This is a text description of the center of gravity limits, it is not used in part of the validation/warning process.\">Textual CG Limits</abbr></td><td><input type=\"text\" name=\"cglimits\" value=\"" . $aircraft['cglimits'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is less than this value.\">Forward CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnfwd\" class=\"numbers\" value=\"" . $aircraft['cgwarnfwd'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is greater than this value.\">Aft CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnaft\" class=\"numbers\" value=\"" . $aircraft['cgwarnaft'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Fuel Unit</td><td><select name=\"fuelunit\">\n<option value=\"Gallons\"";
@@ -510,9 +505,9 @@ if (isset($_REQUEST["func"])) {
                   $newActive = $_REQUEST['active'];
                 }
                 // SQL statement to edit basic aircraft information
-                $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?, cglimits = ?, cgwarnfwd = ?, cgwarnaft = ?, fuelunit = ? WHERE id = ?";
+                $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?,  cgwarnfwd = ?, cgwarnaft = ?, fuelunit = ? WHERE id = ?";
                 $stmt = mysqli_prepare($con, $sql);
-                mysqli_stmt_bind_param($stmt, "ssssssssssi", $newActive, $_REQUEST['tailnumber'], $_REQUEST['makemodel'], $_REQUEST['emptywt'], $_REQUEST['emptycg'], $_REQUEST['maxwt'], $_REQUEST['cglimits'], $_REQUEST['cgwarnfwd'], $_REQUEST['cgwarnaft'], $_REQUEST['fuelunit'], $_REQUEST['id']);
+                mysqli_stmt_bind_param($stmt, "sssssssssi", $newActive, $_REQUEST['tailnumber'], $_REQUEST['makemodel'], $_REQUEST['emptywt'], $_REQUEST['emptycg'], $_REQUEST['maxwt'], $_REQUEST['cgwarnfwd'], $_REQUEST['cgwarnaft'], $_REQUEST['fuelunit'], $_REQUEST['id']);
                 $sql_query = mysqli_stmt_execute($stmt);
 
                 if (!$sql_query) {
