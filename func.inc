@@ -13,6 +13,11 @@ if (!mysqli_connect_error()) {
 	while ($config_row = mysqli_fetch_assoc($config_result)) {
 		$config[$config_row['item']] = $config_row['value'];
 	}
+	// if the database version does not match the version in ver.inc, give an error
+	if ($config['db_version'] != $dbver) {
+		echo "Error: Code requires database version " . $dbver . " but the database is version " . $config['db_version'] . ". Please update code or database.";
+		exit;
+	}
 } else {
 	echo "Error: " . mysqli_connect_error();
 }
