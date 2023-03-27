@@ -44,7 +44,7 @@ function WeightBal() {
 var df = document.forms[0];
 
 <?php
-  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY `order` ASC");
   $weights_query_stmt->bind_param("i", $aircraft['id']);
   $weights_query_stmt->execute();
   $weights_query = $weights_query_stmt->get_result();
@@ -111,7 +111,7 @@ function Process() {
   var df = document.forms[0];
 
 <?php
-  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY `order` ASC");
   $weights_query_stmt->bind_param("i", $aircraft['id']);
   $weights_query_stmt->execute();
   $weights_query = $weights_query_stmt->get_result();
@@ -289,7 +289,7 @@ isamap[3] = "_dn"
   </tr>
 
 <?php
-  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY 'order' ASC");
+  $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY `order` ASC");
   $weights_query_stmt->bind_param("i", $aircraft['id']);
   $weights_query_stmt->execute();
   $weights_query = $weights_query_stmt->get_result();
