@@ -248,9 +248,9 @@ isamap[3] = "_dn"
 <body onload="WeightBal();">
 
 <form method="get" action="index.php"><input type="hidden" name="tailnumber" value="<?php echo($aircraft['id']); ?>">
-<table style="width:700px; margin-left:auto; margin-right:auto;">
+<table style="width:800px; margin-left:auto; margin-right:auto;">
   <tr>
-	  <td colspan="4" rowspan="6">
+	  <td colspan="5" rowspan="6">
       <?php echo "<div class=\"titletext\">" . $config['site_name'] . "<br>" . $aircraft['makemodel'] . " " . $aircraft['tailnumber'] . "</div>";
         $updated_query_stmt = $con->prepare("SELECT `timestamp` FROM `audit` WHERE `what` LIKE ? ORDER BY `timestamp` DESC LIMIT 1");
         $bind_var_with_wildcards = "%" . $aircraft['tailnumber'] . "%";
@@ -284,6 +284,7 @@ isamap[3] = "_dn"
   <tr>
     <th style="width:385px" colspan="2">Item</th>
     <th style="width:105px">Weight (kg)</th>
+    <th style="width:105px">Max (kg)</th>
     <th style="width:105px">Arm (m)</th>
     <th style="width:105px">Moment (kgm)</th>
   </tr>
@@ -295,10 +296,12 @@ isamap[3] = "_dn"
   $weights_query = $weights_query_stmt->get_result();
     while ($weights = mysqli_fetch_assoc($weights_query)) {
         echo "<tr><td";
+        // if not a fuel item, make the cell span 2 columns
         if ($weights['fuel']=="false") {
             echo " colspan=\"2\"";
         }
         echo ">" . $weights['item'] . "</td>\n";
+        // if it is a fuel line, show the fuel fields
         if ($weights['fuel']=="true") {
             echo "<td>";
             echo "<div style=\"display: flex; flex-direction: row; font-size: 10pt;\">";
@@ -323,6 +326,10 @@ isamap[3] = "_dn"
                 echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"line" . $weights['id'] . "_wt\" tabindex=\"" . $tabindex . "\" onblur=\"Process()\" class=\"numbers\"> kg</td>\n";
             }
         }
+        // show the maxweight field readonly 
+        echo "<td>W</td>\n";
+        //echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_wt\" readonly class=\"readonly numbers\"> kg</td>\n";
+        // show the arm field readonly
         echo "<td style=\"text-align: center;\"><input type=\"number\" name=\"line" . $weights['id'] . "_arm\" readonly class=\"readonly numbers\"></td>\n";
         if ($weights['fuel']=="true") {
             echo "<td style=\"text-align: center;\"><div><input type=\"number\" name=\"line" . $weights['id'] . "_mom_to\" readonly class=\"readonly numbers\">";
@@ -337,6 +344,7 @@ isamap[3] = "_dn"
 <tr style="background-color: #FFFF80">
 <td style="text-align: right; font-weight: bold;" colspan="2">Totals at Takeoff<br>Landing</td>
 <td style="text-align: center;"><div><input type="number" name="totwt_to" readonly class="readonly numbers"> kg</div><div><input type="number" name="totwt_ldg" readonly class="readonly numbers"> kg</div></td>
+<td>&nbsp;</td>
 <td style="text-align: center;"><div><input type="number" name="totarm_to" readonly class="readonly numbers"></div><div><input type="number" name="totarm_ldg" readonly class="readonly numbers"></div></td>
 <td style="text-align: center;"><div><input type="number" name="totmom_to" readonly class="readonly numbers"></div><div><input type="number" name="totmom_ldg" readonly class="readonly numbers"></div></td>
 </tr>
