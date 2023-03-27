@@ -438,7 +438,10 @@ if (isset($_REQUEST["func"])) {
 
               // Aicraft loading zones
               echo "<h3 style=\"text-align: center\">Loading Zones</h3>\n";
-              echo "<p style=\"text-align: center; font-size: 12px\">Enter the data for each reference datum.  A description of what should be entered in each field is available by hovering over the column name.</p>\n";
+              echo "<p style=\"text-align: center; font-size: 12px\">Enter the data for each reference datum. ";
+              echo "A description of what should be entered in each field is available by hovering over the column name. ";
+              echo "If you have saved a value for max weight for a position and want to remove it, ";
+              echo "you must delete the line and add it back without a max weight value.</p>\n";
               // get existing loading zones 
               $sql = "SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY aircraft_weights.order";
               $stmt = mysqli_prepare($con, $sql);
@@ -457,34 +460,66 @@ if (isset($_REQUEST["func"])) {
                 . "<th><abbr title=\"Checking this box causes the spreadsheet to take it's entry in fuel and automatically compute the weight.\">Fuel</abbr></th>"
                 . "<th><abbr title=\"If this row is used for fuel, specify how much a unit of fuel weighs (ie: 6 for AVGAS)\">Fuel Unit Weight</abbr></th>"
                 . "<th><abbr title=\"The default weight to be used for a row.  If this is a fuel row, the default number of " . $aircraft['fuelunit'] . ".\">Weight or " . $aircraft['fuelunit'] . "</abbr></th>"
+                . "<th><abbr title=\"The maximum allowable weight for this position.\">Max weight</abbr></th>"
                 . "<th><abbr title=\"The number of inches from the reference datum for the row.\">Arm</abbr></th><th>&nbsp;</th></tr>\n";
               while ($weights = mysqli_fetch_assoc($weights_result)) {
-                echo "<tr><td style=\"text-align: center;\"><input type=\"number\" name=\"order" . $weights['id'] . "\" value=\"" . $weights['order'] . "\" class=\"numbers\" style=\"width: 35px;\"></td>\n"
+                echo "<tr>"
+                // sort order
+                  . "<td style=\"text-align: center;\"><input type=\"number\" name=\"order" . $weights['id'] . "\" value=\"" . $weights['order'] . "\" class=\"numbers\" style=\"width: 35px;\"></td>\n"
+                // item description
                   . "<td style=\"text-align: center;\"><input type=\"text\" name=\"item" . $weights['id'] . "\" value=\"" . $weights['item'] . "\" style=\"width: 125px;\"></td>\n"
+                // emptyweight checkbox
                   . "<td style=\"text-align: center;\"><input type=\"checkbox\" name=\"emptyweight" . $weights['id'] . "\" value=\"true\"";
-                if ($weights['emptyweight'] == "true") {
-                  echo (" checked");
-                }
-                echo "></td>\n<td style=\"text-align: center;\"><input type=\"checkbox\" name=\"fuel" . $weights['id'] . "\" value=\"true\" onclick=\"if(document.loading.fuel" . $weights['id'] . ".checked==false) {document.loading.fuelwt" . $weights['id'] . ".disabled=true;} else {document.loading.fuelwt" . $weights['id'] . ".disabled=false;}\"";
-                if ($weights['fuel'] == "true") {
-                  echo (" checked");
-                }
-                echo "></td>\n<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"fuelwt" . $weights['id'] . "\" value=\"" . $weights['fuelwt'] . "\" class=\"numbers\"";
-                if ($weights['fuel'] == "false") {
-                  echo (" disabled");
-                }
-                echo "></td>\n<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"weight" . $weights['id'] . "\" value=\"" . $weights['weight'] . "\" class=\"numbers\"></td>\n"
+                  if ($weights['emptyweight'] == "true") {
+                    echo (" checked");
+                  }
+                echo "></td>\n";
+                // fuel checkbox
+                echo "<td style=\"text-align: center;\"><input type=\"checkbox\" name=\"fuel" . $weights['id'] . "\" value=\"true\" onclick=\"if(document.loading.fuel" . $weights['id'] . ".checked==false) {document.loading.fuelwt" . $weights['id'] . ".disabled=true;} else {document.loading.fuelwt" . $weights['id'] . ".disabled=false;}\"";
+                  if ($weights['fuel'] == "true") {
+                    echo (" checked");
+                  }
+                echo "></td>\n";
+                // fuel weight
+                echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"fuelwt" . $weights['id'] . "\" value=\"" . $weights['fuelwt'] . "\" class=\"numbers\"";
+                  if ($weights['fuel'] == "false") {
+                    echo (" disabled");
+                  }
+                echo "></td>\n";
+                // weight
+                echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"weight" . $weights['id'] . "\" value=\"" . $weights['weight'] . "\" class=\"numbers\"></td>\n";
+                // maxweight
+                echo "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"maxweight" . $weights['id'] . "\" value=\"" . $weights['maxweight'] . "\" class=\"numbers\"></td>\n"
+                // arm
                   . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"arm" . $weights['id'] . "\" value=\"" . $weights['arm'] . "\" class=\"numbers\"></td>\n"
-                  . "<td style=\"text-align: center;\"><input type=\"button\" value=\"Save\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading&amp;id=" . $weights['id'] . "&amp;"
-                  . "order=' + document.loading.order" . $weights['id'] . ".value + '&amp;item=' + document.loading.item" . $weights['id'] . ".value + '&amp;emptyweight=' + document.loading.emptyweight" . $weights['id'] . ".checked + '&amp;"
-                  . "fuel=' + document.loading.fuel" . $weights['id'] . ".checked + '&amp;fuelwt=' + document.loading.fuelwt" . $weights['id'] . ".value + '&amp;weight=' + document.loading.weight" . $weights['id'] . ".value + '&amp;"
-                  . "arm=' + document.loading.arm" . $weights['id'] . ".value + '&amp;tailnumber=" . $aircraft['id'] . "'\">\n"
-                  . "<input type=\"button\" value=\"Delete\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading_del&amp;id=" . $weights['id'] . "&amp;tailnumber=" . $aircraft['id'] . "'\"></td></tr>\n\n";
+                // Save button
+                  . "<td style=\"text-align: center;\"><input type=\"button\" value=\"Save\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading"
+                  . "&amp;id=" . $weights['id'] 
+                  . "&amp;order=' + document.loading.order" . $weights['id'] . ".value + '"
+                  . "&amp;item=' + document.loading.item" . $weights['id'] . ".value + '"
+                  . "&amp;emptyweight=' + document.loading.emptyweight" . $weights['id'] . ".checked + '"
+                  . "&amp;fuel=' + document.loading.fuel" . $weights['id'] . ".checked + '"
+                  . "&amp;fuelwt=' + document.loading.fuelwt" . $weights['id'] . ".value + '"
+                  . "&amp;weight=' + document.loading.weight" . $weights['id'] . ".value + '"
+                  . "&amp;maxweight=' + document.loading.maxweight" . $weights['id'] . ".value + '"
+                  . "&amp;arm=' + document.loading.arm" . $weights['id'] . ".value + '"
+                  . "&amp;tailnumber=" . $aircraft['id'] . "'\">\n"
+                // Delete button
+                  . "<input type=\"button\" value=\"Delete\" onClick=\"parent.location='http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?func=aircraft&amp;func_do=edit_do&amp;what=loading_del&amp;id=" . $weights['id'] . "&amp;tailnumber=" . $aircraft['id'] . "'\">"
+                  . "</td>";
+                echo "</tr>\n\n";
               }
-              echo "<tr><td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_order\" class=\"numbers\" style=\"width: 35px;\"></td><td style=\"text-align: center;\"><input type=\"text\" name=\"new_item\" style=\"width: 125px;\"></td><td style=\"text-align: center;\"><input type=\"checkbox\" name=\"new_emptyweight\" value=\"true\"></td>"
+              // empty row for adding new rows
+              echo "<tr>"
+                . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_order\" class=\"numbers\" style=\"width: 35px;\"></td>"
+                . "<td style=\"text-align: center;\"><input type=\"text\" name=\"new_item\" style=\"width: 125px;\"></td>"
+                . "<td style=\"text-align: center;\"><input type=\"checkbox\" name=\"new_emptyweight\" value=\"true\"></td>"
                 . "<td style=\"text-align: center;\"><input type=\"checkbox\" name=\"new_fuel\" value=\"true\" onclick=\"if(document.loading.new_fuel.checked==false) {document.loading.new_fuelwt.disabled=true;} else {document.loading.new_fuelwt.disabled=false;}\"></td>"
                 . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_fuelwt\" class=\"numbers\" disabled></td>"
-                . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_weight\" class=\"numbers\"></td><td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_arm\" class=\"numbers\"></td><td style=\"text-align: center;\"><input type=\"submit\" value=\"Add\"></td></tr>\n";
+                . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_weight\" class=\"numbers\"></td>"
+                . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_maxweight\" class=\"numbers\"></td>"
+                . "<td style=\"text-align: center;\"><input type=\"number\" step=\"any\" name=\"new_arm\" class=\"numbers\"></td>"
+                . "<td style=\"text-align: center;\"><input type=\"submit\" value=\"Add\"></td></tr>\n";
               echo "</table></form>\n\n";
             } else {
               echo "<p>Choose an aircraft to modify.</p>\n";
@@ -644,19 +679,13 @@ if (isset($_REQUEST["func"])) {
                   } else {
                     $emptyweight = 'false';
                   }
-                  // check if fuel checkbox is set
+                  // set fuel based on checkbox 
                   if (isset($_REQUEST['fuel']) && $_REQUEST['fuel'] == "true") {
                     $fuel = 'true';
                   } else {
                     $fuel = 'false';
                   }
-                  // Get fuelweight or set to zero if not set
-                  if (isset($_REQUEST['fuelwt']) && $_REQUEST['fuelwt'] != "") {
-                    $fuelwt = $_REQUEST['fuelwt'];
-                  } else {
-                    $weight = 0;
-                  }
-                  // SQL  to edit loading zones
+                  // SQL  to edit loading zones except max weight
                   $sql_query = "UPDATE aircraft_weights "
                     . "SET `order` = ?, `item` = ?, `weight` = ?, "
                     . "`arm` = ?, `emptyweight` = ?, `fuel` = ?, "
@@ -666,13 +695,20 @@ if (isset($_REQUEST["func"])) {
                     $stmt,
                     'sssssssi',
                     $_REQUEST['order'], $_REQUEST['item'], $_REQUEST['weight'],
-                    $_REQUEST['arm'],
-                    $emptyweight,
-                    $fuel,
-                    $fuelwt, $_REQUEST['id']
+                    $_REQUEST['arm'], $emptyweight, $fuel,
+                    $_REQUEST['$fuelwt'], $_REQUEST['id']
                   );
                   mysqli_stmt_execute($stmt);
 
+                  // SQL to edit max weight if set
+                  if (isset($_REQUEST['maxweight']) && $_REQUEST['maxweight'] != "") {
+                    $sql_query = "UPDATE aircraft_weights SET maxweight = ? WHERE id = ?";
+                    $stmt = mysqli_prepare($con, $sql_query);
+                    mysqli_stmt_bind_param($stmt, 'si', $_REQUEST['maxweight'], $_REQUEST['id']);
+                    mysqli_stmt_execute($stmt);
+                  }
+
+                  // Enter in the audit log
                   $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
                   AuditLog($loginuser, $log_entry);
                   // redirect back with messqage
