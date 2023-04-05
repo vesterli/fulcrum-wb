@@ -139,10 +139,41 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
 
         }
 
+        function isPointInsidePolygon(point, polygon) {
+            var x = point[0], y = point[1];
+            var inside = false;
+            for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                var xi = polygon[i][0], yi = polygon[i][1];
+                var xj = polygon[j][0], yj = polygon[j][1];
+                if ((yi > y) != (yj > y)) {
+                var intersect = (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+                } else if (yi == y && xi == x) {
+                // point is on a vertex of the polygon
+                inside = true;
+                break;
+                }
+            }
+            return inside;
+        }
+
         function Process() {
             var df = document.forms[0];
 
             <?php
+            $envelope_query_stmt = $con->prepare("SELECT * FROM aircraft_cg WHERE tailnumber = ? ORDER BY `id` ASC");
+            $envelope_query_stmt->bind_param("i", $aircraft['id']);
+            $envelope_query_stmt->execute();
+            $envelope_query = $envelope_query_stmt->get_result();
+            // loop over the result and place arm,weight pairs into an array
+            $envelope = array();
+            while ($envelope_row = $envelope_query->fetch_assoc()) {
+                // add arm, weight to the array
+                $envelope[] = array($envelope_row['arm'], $envelope_row['weight']);  
+            }
+            // echo the envelope array to a hidden field
+            echo "var envelope = " . json_encode($envelope) . ";\n";
+
             $weights_query_stmt = $con->prepare("SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY `order` ASC");
             $weights_query_stmt->bind_param("i", $aircraft['id']);
             $weights_query_stmt->execute();
@@ -225,7 +256,8 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
             echo "var c2 = " . $aircraft['cgwarnaft'] . ";\n";
             echo "var overt  = Math.round(totwt_to - " . $aircraft['maxwt'] . ");\n\n";
 
-            echo "document.getElementById(\"wbimage\").setAttribute(\"src\",\"scatter.php?tailnumber=" . $aircraft['id'] . "&totarm_to=\" + totarm_to + \"&totwt_to=\" + totwt_to + \"&totarm_ldg=\" + totarm_ldg + \"&totwt_ldg=\" + totwt_ldg + \"\")"; ?>
+            echo "document.getElementById(\"wbimage\").setAttribute(\"src\",\"scatter.php?tailnumber=" . $aircraft['id'] . "&totarm_to=\" + totarm_to + \"&totwt_to=\" + totwt_to + \"&totarm_ldg=\" + totarm_ldg + \"&totwt_ldg=\" + totwt_ldg + \"\")"; 
+            ?>
 
             // WARNINGS
             var warnings = [];
@@ -238,36 +270,22 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
                 warnings.push(message)
                 warning_flag = true
             }
-            // Check for aft CG
-            if (parseFloat(Math.round(totarm_to * 100) / 100) > c2) {
-                var message = "The takeoff CG may be AFT of limits "
-                message += "for this aircraft. Please check the "
-                message += "CG limitations as it applies to the "
-                message += "weight and category of your flight."
+
+            // check if takeoff is within envelope
+            if (!isPointInsidePolygon([totarm_to, totwt_to], envelope)) {
+                var message = "The takeoff CG is outside the "
+                message += "envelope for this aircraft. "
                 warnings.push(message)
                 warning_flag = true
             }
-            // Check for fwd CG oblique line
-            // TODO: Check this, it doesn't seem to work
-            if ((parseFloat(Math.round(totarm_to * 100) / 100) > c2) &&
-                (parseFloat(Math.round(totarm_to * 100) / 100) < c1) &&
-                (parseFloat(Math.round(totwt_to)) > (w1 - ((w1 - w2) / (c1 - c2)) * c1 + ((w1 - w2) / (c1 - c2)) * (parseFloat(Math.round(totarm_to * 100) / 100))))) {
-                var message = "The takeoff CG may be FWD of limits "
-                message += "for this aircraft. Please check the "
-                message += "CG limitations as it applies to the "
-                message += "weight and category of your flight."
+            // check if landing is within envelope
+            if (!isPointInsidePolygon([totarm_ldg, totwt_ldg], envelope)) {
+                var message = "The landing CG is outside the "
+                message += "envelope for this aircraft. "
                 warnings.push(message)
                 warning_flag = true
             }
-            // Check for fwd absolute CG
-            if (parseFloat(Math.round(totarm_to * 100) / 100) < c1) {
-                var message = "The takeoff CG may be FWD of limits "
-                message += "for this aircraft. Please check the "
-                message += "CG limitations as it applies to the "
-                message += "weight and category of your flight. "
-                warnings.push(message)
-                warning_flag = true
-            }
+
 
             // get the linecount from the hidden field
             var linecount = document.getElementById("linecount").value
@@ -295,6 +313,8 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
 
         }
 
+      
+
         // -->
 
         isamap = new Object();
@@ -302,6 +322,7 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
         isamap[1] = "_ov"
         isamap[2] = "_ot"
         isamap[3] = "_dn"
+
 
     </script>
     <style>
