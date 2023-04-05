@@ -487,6 +487,17 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
 
             </table>
 
+            <?php 
+             //show the weighing date and the weighing sheet URL as text
+                echo "<div style=\"text-align: center; font-size: 10pt; margin-top: 10px;\">";
+                echo "Weighing Date: " . $aircraft['weighing_date'] . "&nbsp;";
+                echo "<a href=\"" . $aircraft['weighing_sheet_url'] . "\" target=\"_blank\">Weighing sheet for " . $aircraft['tailnumber'] . "</a>";
+                echo "</div>";
+            ?>
+
+                
+
+
             <?php
             echo "<iframe id=\"wbimage\" src=\"loading.png\" width=\"710\" height=\"360\" style=\"border:0px; display: block; margin-left: auto; margin-right: auto;\"></iframe>\n\n"; ?>
 
