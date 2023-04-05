@@ -60,7 +60,7 @@ if (isset($_REQUEST["func"])) {
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=login');
       } else {
         // print login form
-        echo "<div class=\"titletext\">Tipping Point Administration</div>";
+        echo "<div class=\"titletext\">Fulcrum Administration</div>";
         echo "<form method=\"post\" action=\"admin.php\">\n";
         echo "<input type=\"hidden\" name=\"func\" value=\"login\">\n";
         echo "<table style=\"margin-left: auto; margin-right: auto;\">\n";

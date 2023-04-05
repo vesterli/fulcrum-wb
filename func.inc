@@ -148,7 +148,7 @@ function PageFooter($site_name, $admin, $ver, $dbver)
 			Balance software</a>
 			<?php echo ($ver); ?> (DB
 			<?php echo ($dbver); ?>)<br />
-			Based on <a href="www.tippingpointtool.com" target="_blank">TippingPoint</a> by Caleb Newville
+			Based on <a href="https://sourceforge.net/projects/tippingpoint/" target="_blank">TippingPoint</a> by Caleb Newville
 		</p>
 		<div style="height: 20px;"></div>
 		</body>
