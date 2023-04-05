@@ -122,10 +122,10 @@ if (isset($_REQUEST["func"])) {
             if (isset($_REQUEST["step"]) && $_REQUEST["step"] == "2") {
               // step 2 means we have gathered data from new aircraft form and are ready to insert in database
               $insert_aircraft_stmt = $con->prepare("INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
-                . " `emptycg`, `maxwt`, `cgwarnfwd`, `cgwarnaft`, `fuelunit`) "
-                . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                . " `emptycg`, `maxwt`, `cgwarnfwd`, `cgwarnaft`, `weighing_date`, `weighing_sheet_url`, `fuelunit`) "
+                . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
               $insert_aircraft_stmt->bind_param(
-                "issssssss"
+                "ssssssssss"
                 , $_REQUEST['tailnumber']
                 , $_REQUEST['makemodel']
                 , $_REQUEST['emptywt']
@@ -133,19 +133,29 @@ if (isset($_REQUEST["func"])) {
                 , $_REQUEST['maxwt']
                 , $_REQUEST['cgwarnfwd']
                 , $_REQUEST['cgwarnaft']
+                , $_REQUEST['weighing_date']
+                , $_REQUEST['weighing_sheet_url']
                 , $_REQUEST['fuelunit']
               );
               $insert_aircraft_stmt->execute();
 
-              // retrieve the id of the new aircraft, latest entry with the tailnumber we just added
-              $stmt = $con->prepare("SELECT * FROM `aircraft` WHERE `tailnumber` = ? ORDER BY `id` DESC LIMIT 1");
-              mysqli_stmt_bind_param($stmt, "s", $_REQUEST['tailnumber']);
-              mysqli_stmt_execute($stmt);
-              $aircraft_result = mysqli_stmt_get_result($stmt);
-              $aircraft = mysqli_fetch_assoc($aircraft_result);
-              // Enter in the audit log
-              mysqli_query($con, "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, '" . $loginuser . "', '" . $aircraft['tailnumber'] . ": " . addslashes($sql_query) . "');");
-              echo "<p>Aircraft " . $aircraft['tailnumber'] . " added successfully.  Now go to the <a href=\"admin.php?func=aircraft&amp;func_do=edit&amp;tailnumber=" . $aircraft['id'] . "\">aircraft editor</a> to complete the CG envelope and loading zones.</p>\n";
+              // create record in the audit log
+              $audit_text = "INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
+                . " `emptycg`, `maxwt`, `cgwarnfwd`, `cgwarnaft`, `weighing_date`, `weighing_sheet_url`, `fuelunit`) "
+                . " VALUES ('0', " . $_REQUEST['tailnumber'] . ", " . $_REQUEST['makemodel'] . ", " . $_REQUEST['emptywt'] . ", "
+                . $_REQUEST['emptycg'] . ", " . $_REQUEST['maxwt'] . ", " . $_REQUEST['cgwarnfwd'] . ", " . $_REQUEST['cgwarnaft'] . ", "
+                . $_REQUEST['weighing_date'] . ", " . $_REQUEST['weighing_sheet_url'] . ", " . $_REQUEST['fuelunit'] . ");";
+              AuditLog($loginuser, $audit_text);
+              
+              // get the aircraft ID
+              $aircraft_id_stmt = $con->prepare("SELECT id FROM aircraft WHERE tailnumber = ?;");
+              $aircraft_id_stmt->bind_param("s", $_REQUEST['tailnumber']);
+              $aircraft_id_stmt->execute();
+              $aircraft_id_stmt->bind_result($aircraft_id);
+              $aircraft_id_stmt->fetch();
+              $aircraft_id_stmt->close();
+
+              echo "<p>Aircraft " . $_REQUEST['tailnumber'] . " added successfully.  Now go to the <a href=\"admin.php?func=aircraft&amp;func_do=edit&amp;tailnumber=" . $aircraft_id . "\">aircraft editor</a> to complete the CG envelope and loading zones.</p>\n";
             } else {
               // not in step 2 where we have received data, show instructions instead
               echo "<p>To add a new aircraft, we will first define the basics about the aircraft.</p>\n";
@@ -163,6 +173,10 @@ if (isset($_REQUEST["func"])) {
               echo "<tr><td style=\"text-align: right\">Maximum Gross Weight</td><td><input type=\"number\" step=\"any\" name=\"maxwt\" class=\"numbers\" value=\"2550\" onfocus=\"javascript:if(this.value=='2550') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='2550'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is less than this value.\">Forward CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnfwd\" class=\"numbers\" value=\"35\" onfocus=\"javascript:if(this.value=='35') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='35'}\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is greater than this value.\">Aft CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnaft\" class=\"numbers\" value=\"47.3\" onfocus=\"javascript:if(this.value=='47.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='47.3'}\"></td></tr>\n";
+              // add field for weighing date
+              echo "<tr><td style=\"text-align: right\">Weighing Date</td><td><input type=\"date\" name=\"weighing_date\" value=\"" . date("Y-m-d") . "\"></td></tr>\n";
+              // add field for weighing sheet URL
+              echo "<tr><td style=\"text-align: right\">Weighing Sheet URL</td><td><input type=\"text\" name=\"weighing_sheet_url\" value=\"https://\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Fuel Unit</td><td><select name=\"fuelunit\"><option value=\"Gallons\">Gallons</option><option value=\"Liters\">Liters</option><option value=\"Pounds\">Pounds</option><option value=\"Kilograms\">Kilograms</option></select></td></tr>\n";
               echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Step 2\"></td></tr>\n";
               echo "</table></form>\n";
@@ -228,6 +242,8 @@ if (isset($_REQUEST["func"])) {
                 , `maxwt`
                 , `cgwarnfwd`
                 , `cgwarnaft`
+                , `weighing_date`
+                , `weighing_sheet_url`
                 , `fuelunit`
                 ) VALUES (
                   '0'
@@ -238,6 +254,8 @@ if (isset($_REQUEST["func"])) {
                 , '" . $aircraft['maxwt'] . "'
                 , '" . $aircraft['cgwarnfwd'] . "'
                 , '" . $aircraft['cgwarnaft'] . "'
+                , '" . $aircraft['weighing_date'] . "'
+                , '" . $aircraft['weighing_sheet_url'] . "'
                 , '" . $aircraft['fuelunit'] . "'
                 );"
                 )
@@ -388,6 +406,10 @@ if (isset($_REQUEST["func"])) {
               echo "<tr><td style=\"text-align: right\">Maximum Gross Weight</td><td><input type=\"number\" step=\"any\" name=\"maxwt\" class=\"numbers\" value=\"" . $aircraft['maxwt'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is less than this value.\">Forward CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnfwd\" class=\"numbers\" value=\"" . $aircraft['cgwarnfwd'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is greater than this value.\">Aft CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnaft\" class=\"numbers\" value=\"" . $aircraft['cgwarnaft'] . "\"></td></tr>\n";
+              // add field for entering weighing date
+              echo "<tr><td style=\"text-align: right\">Weighing Date</td><td><input type=\"date\" name=\"weighing_date\" value=\"" . $aircraft['weighing_date'] . "\"></td></tr>\n";
+              // add field for entering weighing sheet URL
+              echo "<tr><td style=\"text-align: right\">Weighing Sheet URL</td><td><input type=\"text\" name=\"weighing_sheet_url\" value=\"" . $aircraft['weighing_sheet_url'] . "\"></td></tr>\n";
               echo "<tr><td style=\"text-align: right\">Fuel Unit</td><td><select name=\"fuelunit\">\n<option value=\"Gallons\"";
               if ($aircraft['fuelunit'] == "Gallons") {
                 echo " selected";
@@ -540,9 +562,22 @@ if (isset($_REQUEST["func"])) {
                   $newActive = $_REQUEST['active'];
                 }
                 // SQL statement to edit basic aircraft information
-                $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?,  cgwarnfwd = ?, cgwarnaft = ?, fuelunit = ? WHERE id = ?";
+                $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?,  cgwarnfwd = ?, cgwarnaft = ?, weighing_date = ?, weighing_sheet_url = ?, fuelunit = ? WHERE id = ?";
                 $stmt = mysqli_prepare($con, $sql);
-                mysqli_stmt_bind_param($stmt, "sssssssssi", $newActive, $_REQUEST['tailnumber'], $_REQUEST['makemodel'], $_REQUEST['emptywt'], $_REQUEST['emptycg'], $_REQUEST['maxwt'], $_REQUEST['cgwarnfwd'], $_REQUEST['cgwarnaft'], $_REQUEST['fuelunit'], $_REQUEST['id']);
+                mysqli_stmt_bind_param($stmt, "issssssssssi", 
+                  $newActive, 
+                  $_REQUEST['tailnumber'], 
+                  $_REQUEST['makemodel'], 
+                  $_REQUEST['emptywt'], 
+                  $_REQUEST['emptycg'], 
+                  $_REQUEST['maxwt'], 
+                  $_REQUEST['cgwarnfwd'], 
+                  $_REQUEST['cgwarnaft'],
+                  $_REQUEST['weighing_date'],
+                  $_REQUEST['weighing_sheet_url'],
+                  $_REQUEST['fuelunit'], 
+                  $_REQUEST['id']
+                );
                 $sql_query = mysqli_stmt_execute($stmt);
 
                 if (!$sql_query) {
@@ -550,8 +585,26 @@ if (isset($_REQUEST["func"])) {
 
                 }
 
-                $log_entry = $_REQUEST['tailnumber'] . ": " . addslashes($sql_query);
-                AuditLog($loginuser, $log_entry);
+                // log SQL and bind parameters
+                $sql = "UPDATE aircraft SET active = ?, tailnumber = ?, makemodel = ?, emptywt = ?, emptycg = ?, maxwt = ?,  cgwarnfwd = ?, cgwarnaft = ?, weighing_date = ?, weighing_sheet_url = ?, fuelunit = ? WHERE id = ?";
+                $bind = array(
+                  $newActive, 
+                  $_REQUEST['tailnumber'], 
+                  $_REQUEST['makemodel'], 
+                  $_REQUEST['emptywt'], 
+                  $_REQUEST['emptycg'], 
+                  $_REQUEST['maxwt'], 
+                  $_REQUEST['cgwarnfwd'], 
+                  $_REQUEST['cgwarnaft'],
+                  $_REQUEST['weighing_date'],
+                  $_REQUEST['weighing_sheet_url'],
+                  $_REQUEST['fuelunit'], 
+                  $_REQUEST['id']
+                );
+                // combine SQL and bind parameters into one string
+                $sql = $sql . " " . implode(", ", $bind);
+                AuditLog($loginuser, $sql);
+                
                 // redirect back to edit page with message
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['id'] . '&message=updated');
                 break;
