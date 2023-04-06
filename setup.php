@@ -66,23 +66,10 @@
 	                // if the func key exists, we are in the setup process
                 	switch ($_REQUEST['func']) {
 		                case "step2":
-			                // Write config file
-                			$configfile = fopen("config.inc", "w+");
-			                fwrite(
-			                	$configfile,
-			                	"<?php\n\$dbserver=\"" . $_REQUEST['dbserver'] . "\";\n"
-			                	. "\$dbname=\"" . $_REQUEST['dbname'] . "\";\n"
-			                	. "\$dbuser=\"" . $_REQUEST['dbuser'] . "\";\n"
-			                	. "\$dbpass=\"" . $_REQUEST['dbpass'] . "\";\n?>"
-			                );
-
-			                // Create database
-                			$con = mysqli_connect($_REQUEST['dbserver'], $_REQUEST['dbuser'], $_REQUEST['dbpass']);
-			                // if no connect error
-                			if (!mysqli_connect_error()) {
-				                $sql_query = "CREATE DATABASE IF NOT EXISTS " . $_REQUEST['dbname'] . " ;";
-				                mysqli_multi_query($con, $sql_query);
-
+							// Try to connect to database
+							try {
+								$con = mysqli_connect($_REQUEST['dbserver'], $_REQUEST['dbuser'], $_REQUEST['dbpass'], $_REQUEST['dbname']);
+							
 				                // Populate database
                 				$con = mysqli_connect($_REQUEST['dbserver'], $_REQUEST['dbuser'], $_REQUEST['dbpass'], $_REQUEST['dbname']) or die(mysqli_connect_error());
 				                $sql_query = "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n"
@@ -95,14 +82,25 @@
 				                	. "CREATE TABLE IF NOT EXISTS `users` (`id` int(11) NOT NULL auto_increment, `username` char(24) NOT NULL, `password` varchar(255) NOT NULL, `name` char(48) NOT NULL, `email` char(48) NOT NULL, `superuser` tinyint(4) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;\n";
 				                mysqli_multi_query($con, $sql_query);
 
+								// Write config file
+								$configfile = fopen("config.inc", "w+");
+								fwrite(
+									$configfile,
+									"<?php\n\$dbserver=\"" . $_REQUEST['dbserver'] . "\";\n"
+									. "\$dbname=\"" . $_REQUEST['dbname'] . "\";\n"
+									. "\$dbuser=\"" . $_REQUEST['dbuser'] . "\";\n"
+									. "\$dbpass=\"" . $_REQUEST['dbpass'] . "\";\n?>"
+								);
+								fclose($configfile);
+
 				                header("Location: http://" . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . "?func=step3");
-			                } else { // connect error	
-                				echo "<div class=\"error\">Error connecting to database server. Please check your settings and try again.</div>";
+			                } catch (Exception $e) {
+				                echo "<div class=\"error\">Error connecting to database server. Please check your settings and try again.</div>";
 			                }
 			                break;
 
 		                case "step3":
-			                $config['timezone'] = "America/Anchorage";
+			                $config['timezone'] = "Europe/Copenhagen";
 			                require 'func.inc';
 
 			                echo ("<p>Define system settings.</p>\n"
@@ -118,7 +116,7 @@
 			                break;
 
 		                case "step4":
-			                $config['timezone'] = "America/Anchorage";
+			                $config['timezone'] = "Europe/Copenhagen";
 			                include "func.inc";
 			                $con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname) or die(mysqli_connect_error());
 

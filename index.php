@@ -1,5 +1,6 @@
 <?php
 include 'func.inc';
+include 'htmltext.inc';
 PageHeader($config['site_name']);
 ?>
 

@@ -1,5 +1,6 @@
 <?php
 include 'func.inc';
+include 'htmltext.inc';
 PageHeader("Admin Interface");
 session_start();
 ?>
@@ -50,9 +51,9 @@ if (isset($_REQUEST['sysmsg'])) {
 }
 
 if (isset($_REQUEST["func"])) {
-  // there is a function to perform
+  // user selected a function module from the menu
   switch ($_REQUEST["func"]) {
-    case "login":
+    case "login": {
       if (isset($_REQUEST['username']) && $_REQUEST['username'] != "") {
         // user has submitted login form
         $_SESSION["loginuser"] = $_REQUEST['username'];
@@ -70,14 +71,14 @@ if (isset($_REQUEST["func"])) {
         echo "</table></form>\n";
       }
       break;
-
-    case "logout":
+    }
+    case "logout": {
       session_unset();
       session_destroy();
       header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=login&sysmsg=logout');
       break;
-
-    case "system":
+    }
+    case "system": {
       //verify user is superuser
       if ($loginlevel != "1") {
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=unauthorized');
@@ -112,15 +113,19 @@ if (isset($_REQUEST["func"])) {
           . "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Save\"></td></tr></table></form>";
       }
       break;
-
-    case "aircraft":
+    }
+    case "aircraft": {
       echo "<div class=\"titletext\">Aircraft Module</div>";
-
+      // if there is an instruction to do something
       if (isset($_REQUEST["func_do"])) {
         switch ($_REQUEST["func_do"]) {
-          case "add":
-            if (isset($_REQUEST["step"]) && $_REQUEST["step"] == "2") {
-              // step 2 means we have gathered data from new aircraft form and are ready to insert in database
+          case "add": {
+            // if we are not in step 2, show the data entry form
+            if (!(isset($_REQUEST["step"]) && $_REQUEST["step"] == "2")) {
+              showAircraftEntryForm();
+            } 
+            // step 2 means we have gathered data from new aircraft form and are ready to insert in database
+            else {
               $insert_aircraft_stmt = $con->prepare("INSERT INTO `aircraft` (`active`, `tailnumber`, `makemodel`, `emptywt`,"
                 . " `emptycg`, `maxwt`, `cgwarnfwd`, `cgwarnaft`, `weighing_date`, `weighing_sheet_url`, `fuelunit`) "
                 . " VALUES ('0', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
@@ -156,33 +161,10 @@ if (isset($_REQUEST["func"])) {
               $aircraft_id_stmt->close();
 
               echo "<p>Aircraft " . $_REQUEST['tailnumber'] . " added successfully.  Now go to the <a href=\"admin.php?func=aircraft&amp;func_do=edit&amp;tailnumber=" . $aircraft_id . "\">aircraft editor</a> to complete the CG envelope and loading zones.</p>\n";
-            } else {
-              // not in step 2 where we have received data, show instructions instead
-              echo "<p>To add a new aircraft, we will first define the basics about the aircraft.</p>\n";
-              echo "<p style=\"font-size:11px; font-style:italic\">Default values are included to help you know what to fill in to each field.  When you click in the field, it will be cleared so you can fill in your data. \n";
-              echo "Some fields have an underline, if you mouse over them, a help pop-up will appear.</p>\n";
-              echo "<form method=\"post\" action=\"admin.php\">\n";
-              echo "<input type=\"hidden\" name=\"func\" value=\"aircraft\">\n";
-              echo "<input type=\"hidden\" name=\"func_do\" value=\"add\">\n";
-              echo "<input type=\"hidden\" name=\"step\" value=\"2\">\n";
-              echo "<table style=\"width: 100%; border-style: none;\">\n";
-              echo "<tr><td style=\"text-align: right; width: 50px;\">Tail Number</td><td style=\"width: 50%\"><input type=\"text\" name=\"tailnumber\" value=\"N123AB\" onfocus=\"javascript:if(this.value=='N123AB') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='N123AB'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\">Make and Model</td><td><input type=\"text\" name=\"makemodel\" value=\"Cessna Skyhawk\" onfocus=\"javascript:if(this.value=='Cessna Skyhawk') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='Cessna Skyhawk'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\">Empty Weight</td><td><input type=\"number\" step=\"any\" name=\"emptywt\" class=\"numbers\" value=\"1556.3\" onfocus=\"javascript:if(this.value=='1556.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='1556.3'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\">Empty CG</td><td><input type=\"number\" step=\"any\" name=\"emptycg\" class=\"numbers\" value=\"38.78\" onfocus=\"javascript:if(this.value=='38.78') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='38.78'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\">Maximum Gross Weight</td><td><input type=\"number\" step=\"any\" name=\"maxwt\" class=\"numbers\" value=\"2550\" onfocus=\"javascript:if(this.value=='2550') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='2550'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is less than this value.\">Forward CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnfwd\" class=\"numbers\" value=\"35\" onfocus=\"javascript:if(this.value=='35') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='35'}\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\"><abbr title=\"This value will be used to pop up a warning if the calculated CG is greater than this value.\">Aft CG Warning</abbr></td><td><input type=\"number\" step=\"any\" name=\"cgwarnaft\" class=\"numbers\" value=\"47.3\" onfocus=\"javascript:if(this.value=='47.3') {this.value='';}\" onblur=\"javascript:if(this.value=='') {this.value='47.3'}\"></td></tr>\n";
-              // add field for weighing date
-              echo "<tr><td style=\"text-align: right\">Weighing Date</td><td><input type=\"date\" name=\"weighing_date\" value=\"" . date("Y-m-d") . "\"></td></tr>\n";
-              // add field for weighing sheet URL
-              echo "<tr><td style=\"text-align: right\">Weighing Sheet URL</td><td><input type=\"text\" name=\"weighing_sheet_url\" value=\"https://\"></td></tr>\n";
-              echo "<tr><td style=\"text-align: right\">Fuel Unit</td><td><select name=\"fuelunit\"><option value=\"Gallons\">Gallons</option><option value=\"Liters\">Liters</option><option value=\"Pounds\">Pounds</option><option value=\"Kilograms\">Kilograms</option></select></td></tr>\n";
-              echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Step 2\"></td></tr>\n";
-              echo "</table></form>\n";
             }
             break;
-          case "delete":
+          }
+          case "delete": {
             if (isset($_REQUEST['tailnumber']) && $_REQUEST['tailnumber'] != "") {
               if ($_REQUEST['confirm'] == "DELETE FOREVER") {
                 $sql_query1 = "DELETE FROM aircraft_cg WHERE `tailnumber` = ?";
@@ -220,7 +202,8 @@ if (isset($_REQUEST["func"])) {
               echo "</table></form>\n\n";
             }
             break;
-          case "duplicate":
+          }
+          case "duplicate": {
             if (isset($_REQUEST['tailnumber']) && $_REQUEST['tailnumber'] != "") {
               // retrieve the aircraft data to be duplicated              
               $sql = "SELECT * FROM aircraft WHERE id = ?";
@@ -370,7 +353,9 @@ if (isset($_REQUEST["func"])) {
                 . "</table></form>\n\n";
             }
             break;
-          case "edit":
+          }
+          // show aircraft edit screen
+          case "edit": {
             if (isset($_REQUEST['tailnumber']) && $_REQUEST['tailnumber'] != "") {
 
               $sql = "SELECT * FROM aircraft WHERE id = ?";
@@ -430,6 +415,7 @@ if (isset($_REQUEST["func"])) {
               echo "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Save\"></td></tr>\n";
               echo "</table></form><hr>\n\n";
 
+              
               // Aicraft CG envelope
               echo "<h3 style=\"text-align: center\">Center of Gravity Envelope</h3>\n";
               echo "<p style=\"text-align: center; font-size: 12px\">Enter the data points for the CG envelope.  It does not matter which point you start with or if you go clockwise or counter-clockwise, but they must be entered in order.  "
@@ -461,9 +447,7 @@ if (isset($_REQUEST["func"])) {
               // Aicraft loading zones
               echo "<h3 style=\"text-align: center\">Loading Zones</h3>\n";
               echo "<p style=\"text-align: center; font-size: 12px\">Enter the data for each reference datum. ";
-              echo "A description of what should be entered in each field is available by hovering over the column name. ";
-              echo "If you have saved a value for max weight for a position and want to remove it, ";
-              echo "you must delete the line and add it back without a max weight value.</p>\n";
+              echo "A description of what should be entered in each field is available by hovering over the column name. </p>\n";
               // get existing loading zones 
               $sql = "SELECT * FROM aircraft_weights WHERE tailnumber = ? ORDER BY aircraft_weights.order";
               $stmt = mysqli_prepare($con, $sql);
@@ -552,10 +536,12 @@ if (isset($_REQUEST["func"])) {
               echo "<input type=\"submit\" value=\"Select\"></form>\n\n";
             }
             break;
-
-          case "edit_do":
+          }
+          // process changes to aircraft data
+          case "edit_do": {
             switch ($_REQUEST["what"]) {
-              case "basics":
+              // process changes to basic aircraft data
+              case "basics": {
                 if (!isset($_REQUEST['active'])) {
                   $newActive = 0;
                 } else {
@@ -608,26 +594,23 @@ if (isset($_REQUEST["func"])) {
                 // redirect back to edit page with message
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['id'] . '&message=updated');
                 break;
-              case "cg":
+              }
+              // add new CG line or edit existing 
+              case "cg": {
                 if ($_REQUEST['new_arm'] != "" && $_REQUEST['new_weight'] != "") {
                   // SQL to add a new CG line
-                  $sql_query = "INSERT INTO aircraft_cg (`id`, `tailnumber`, `arm`, `weight`) VALUES (NULL, ?, ?, ?);";
-                  $stmt = mysqli_prepare($con, $sql);
-                  mysqli_stmt_bind_param($stmt, "sss", $_REQUEST['tailnumber'], $_REQUEST['new_arm'], $_REQUEST['new_weight']);
-                  mysqli_stmt_execute($stmt);
+                  $insert_aircraft_cg_sql = "INSERT INTO aircraft_cg (`id`, `tailnumber`, `arm`, `weight`) VALUES (NULL, ?, ?, ?);";
+                  $insert_aircraft_cg_stmt = mysqli_prepare($con, $insert_aircraft_cg_sql);
+                  mysqli_stmt_bind_param($insert_aircraft_cg_stmt, "sss", $_REQUEST['tailnumber'], $_REQUEST['new_arm'], $_REQUEST['new_weight']);
+                  mysqli_stmt_execute($insert_aircraft_cg_stmt);
 
-                  // Enter in the audit log
-                  $aircraft_query = mysqli_prepare($con, "SELECT * FROM aircraft WHERE id = ?");
-                  mysqli_stmt_bind_param($aircraft_query, 'i', $_REQUEST['tailnumber']);
-                  mysqli_stmt_execute($aircraft_query);
-                  $aircraft_result = mysqli_stmt_get_result($aircraft_query);
-                  $aircraft = mysqli_fetch_array($aircraft_result);
-                  $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
+                  // log SQL and bind parameters
+                  $insert_aircraft_cg_sql = "INSERT INTO aircraft_cg (`id`, `tailnumber`, `arm`, `weight`) VALUES (NULL, ?, ?, ?);";
+                  $insert_aircraft_cg_bind = array($_REQUEST['tailnumber'], $_REQUEST['new_arm'], $_REQUEST['new_weight']);
+                  $insert_aircraft_cg_sql = $insert_aircraft_cg_sql . " " . implode(", ", $insert_aircraft_cg_bind);
+                  AuditLog($loginuser, $insert_aircraft_cg_sql);
 
-                  $sql_query = "INSERT INTO audit (`id`, `timestamp`, `who`, `what`) VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
-                  $stmt = mysqli_prepare($con, $sql_query);
-                  mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
-                  mysqli_stmt_execute($stmt);
+                  // redirect back to aircraft edit page with message
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 } else {
                   // SQL to edit CG information
@@ -648,11 +631,14 @@ if (isset($_REQUEST["func"])) {
                   $stmt = mysqli_prepare($con, $sql_query);
                   mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
                   mysqli_stmt_execute($stmt);
+                  // redirect back to aircraft edit page with message
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 }
+                // no break necessary, we should always redirect. Break anyway to be safe.
                 break;
-              case "cg_del":
-                // SQL  to delete CG information
+              }
+              // delete CG line
+              case "cg_del": {
                 $sql_query = "DELETE FROM aircraft_cg WHERE id = ?";
                 $stmt = mysqli_prepare($con, $sql_query);
                 mysqli_stmt_bind_param($stmt, 'i', $_REQUEST['id']);
@@ -670,12 +656,16 @@ if (isset($_REQUEST["func"])) {
                 $stmt = mysqli_prepare($con, $sql_query);
                 mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
                 mysqli_stmt_execute($stmt);
+                // redirect back to aircraft edit page with message
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
-              // no break
-              case "loading":
+                // no break necessary, we should always redirect. Break anyway to be safe.
+                break;
+              }
+              // add new loading zone or edit existing
+              case "loading": {
                 if (
-                  isset($_REQUEST['new_order']) && $_REQUEST['new_order']
-                  && isset($_REQUEST['new_item']) && $_REQUEST['new_item']
+                  isset($_REQUEST['new_order']) && $_REQUEST['new_order'] != ""
+                  && isset($_REQUEST['new_item']) && $_REQUEST['new_item'] != ""
                   && isset($_REQUEST['new_arm']) && $_REQUEST['new_arm'] != ""
                 ) {
                   // we have enough data to add a line
@@ -702,26 +692,42 @@ if (isset($_REQUEST["func"])) {
                   } else {
                     $new_weight = 0;
                   }
-                  // SQL  to add a new loading line
-                  $sql_query = "INSERT INTO aircraft_weights "
-                    . "(`id`, `tailnumber`, `order`, `item`, `weight`, `arm`, `emptyweight`, `fuel`, `fuelwt`)"
-                    . " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                  $stmt = mysqli_prepare($con, $sql_query);
+                  // get maxweight, convert to null if not set
+                  if (isset($_REQUEST['new_maxweight']) && $_REQUEST['new_maxweight'] != "") {
+                    $new_maxweight = $_REQUEST['new_maxweight'];
+                  } else {
+                    $new_maxweight = null;
+                  }
+                  // SQL to add a new loading line
+                  $insert_aircraft_weight_sql = "INSERT INTO aircraft_weights "
+                    . "(`id`, `tailnumber`, `order`, `item`, `weight`, `maxweight`, `arm`, `emptyweight`, `fuel`, `fuelwt`)"
+                    . " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                  $insert_aircraft_weight_stmt = mysqli_prepare($con, $insert_aircraft_weight_sql);
                   mysqli_stmt_bind_param(
-                    $stmt,
-                    'iisssssss',
-                    $_REQUEST['id'], $_REQUEST['tailnumber'], $_REQUEST['new_order'],
+                    $insert_aircraft_weight_stmt,
+                    'iissssssss',
+                    $_REQUEST['id'], 
+                    $_REQUEST['tailnumber'], 
+                    $_REQUEST['new_order'],
                     $_REQUEST['new_item'],
-                    $new_weight, $_REQUEST['new_arm'],
+                    $new_weight,
+                    $new_maxweight,                    
+                    $_REQUEST['new_arm'],
                     $new_emptyweight,
                     $new_fuel,
                     $new_fuelwt
                   );
-                  mysqli_stmt_execute($stmt);
+                  mysqli_stmt_execute($insert_aircraft_weight_stmt);
 
-                  $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
+                  // write insert aircraft weight statement and its bind variables to audit log
+                  $insert_aircraft_weight_sql = "INSERT INTO aircraft_weights "
+                    . "(`id`, `tailnumber`, `order`, `item`, `weight`, `maxweight`, `arm`, `emptyweight`, `fuel`, `fuelwt`)"
+                    . " VALUES (" . $_REQUEST['id'] . ", " . $_REQUEST['tailnumber'] . ", " . $_REQUEST['new_order'] . ", "
+                    . $_REQUEST['new_item'] . ", " . $new_weight . ", " . $_REQUEST['new_maxweight'] . ", "
+                    . $_REQUEST['new_arm'] . ", " . $new_emptyweight . ", " . $new_fuel . ", " . $new_fuelwt . ")";
+                  $log_entry = $aircraft['tailnumber'] . ": " . addslashes($insert_aircraft_weight_sql);
                   AuditLog($loginuser, $log_entry);
-
+                  
                   // redirect back with message
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 } else {
@@ -738,37 +744,54 @@ if (isset($_REQUEST["func"])) {
                   } else {
                     $fuel = 'false';
                   }
-                  // SQL  to edit loading zones except max weight
-                  $sql_query = "UPDATE aircraft_weights "
-                    . "SET `order` = ?, `item` = ?, `weight` = ?, "
+                  // get maxweight, convert to null if not set
+                  if (isset($_REQUEST['maxweight']) && $_REQUEST['maxweight'] != "") {
+                    $maxweight = $_REQUEST['maxweight'];
+                  } else {
+                    $maxweight = null;
+                  }
+                  // SQL to edit loading zones 
+                  $update_aircraft_weight_sql = "UPDATE aircraft_weights "
+                    . "SET `order` = ?, `item` = ?, `weight` = ?, `maxweight` = ?,"
                     . "`arm` = ?, `emptyweight` = ?, `fuel` = ?, "
                     . "`fuelwt` = ? WHERE id = ?";
-                  $stmt = mysqli_prepare($con, $sql_query);
+                  $update_aircraft_weight_stmt = mysqli_prepare($con, $update_aircraft_weight_sql);
                   mysqli_stmt_bind_param(
-                    $stmt,
-                    'sssssssi',
-                    $_REQUEST['order'], $_REQUEST['item'], $_REQUEST['weight'],
-                    $_REQUEST['arm'], $emptyweight, $fuel,
-                    $_REQUEST['$fuelwt'], $_REQUEST['id']
+                    $update_aircraft_weight_stmt,
+                    'ssssssssi',
+                    $_REQUEST['order'], 
+                    $_REQUEST['item'], 
+                    $_REQUEST['weight'],
+                    $maxweight,
+                    $_REQUEST['arm'], 
+                    $emptyweight, 
+                    $fuel,
+                    $_REQUEST['$fuelwt'], 
+                    $_REQUEST['id']
                   );
-                  mysqli_stmt_execute($stmt);
+                  mysqli_stmt_execute($update_aircraft_weight_stmt);
 
-                  // SQL to edit max weight if set
-                  if (isset($_REQUEST['maxweight']) && $_REQUEST['maxweight'] != "") {
-                    $sql_query = "UPDATE aircraft_weights SET maxweight = ? WHERE id = ?";
-                    $stmt = mysqli_prepare($con, $sql_query);
-                    mysqli_stmt_bind_param($stmt, 'si', $_REQUEST['maxweight'], $_REQUEST['id']);
-                    mysqli_stmt_execute($stmt);
-                  }
+                  // write edit aircraft loading zone statement and its bind variables to audit log
+                  $update_aircraft_weight_sql = "UPDATE aircraft_weights "
+                  . "SET `order` = " . $_REQUEST['order']
+                  . ", `item` = " . $_REQUEST['item']
+                  . ", `weight` = " . $_REQUEST['weight']
+                  . ", `maxweight` = " . $maxweight
+                  . ", `arm` = " . $_REQUEST['arm']
+                  . ", `emptyweight` = " . $emptyweight
+                  . ", `fuel` = " . $fuel
+                  . ", `fuelwt` = " . $_REQUEST['$fuelwt']
+                  . "WHERE id = " . $_REQUEST['id'];
+                  AuditLog($loginuser, $update_aircraft_weight_sql);
 
-                  // Enter in the audit log
-                  $log_entry = $aircraft['tailnumber'] . ": " . addslashes($sql_query);
-                  AuditLog($loginuser, $log_entry);
                   // redirect back with messqage
                   header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
                 }
+                // we should always redirect back, so no break necessary here. Added just in case
                 break;
-              case "loading_del":
+              }
+              // delete loading zone
+              case "loading_del": {
                 // SQL query to delete loading information
                 $sql_query = "DELETE FROM aircraft_weights WHERE id = ?";
                 $stmt = mysqli_prepare($con, $sql_query);
@@ -787,27 +810,22 @@ if (isset($_REQUEST["func"])) {
                 mysqli_stmt_bind_param($stmt, 'ss', $loginuser, $log_entry);
                 mysqli_stmt_execute($stmt);
                 header('Location: http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?func=aircraft&func_do=edit&tailnumber=' . $_REQUEST['tailnumber'] . '&message=updated');
+              }
             }
             break;
-          default:
-            // if we got invalid aircraft func_do order, just show instructions
-            echo "<p>This module edits aircraft weight and balance templates.</p>\n";
-            echo "<a href=\"admin.php?func=aircraft&amp;func_do=add\">Add Aicraft</a><br>\n";
-            echo "<a href=\"admin.php?func=aircraft&amp;func_do=edit\">Edit Aicraft</a><br>\n";
-            echo "<a href=\"admin.php?func=aircraft&amp;func_do=duplicate\">Duplicate Aicraft</a><br>\n";
-            echo "<a href=\"admin.php?func=aircraft&amp;func_do=delete\">Delete Aicraft</a>\n";
+          } 
+          default: {
+            // if no valid aircraft func_do order, just show menu
+            showAircraftMenu();
+          }
         } // end aircraft switch
       } else {
-        // no func_do instruction to make any change, show aircraft change instructions
-        echo "<p>This module edits aircraft weight and balance templates.</p>\n";
-        echo "<a href=\"admin.php?func=aircraft&amp;func_do=add\">Add Aicraft</a><br>\n";
-        echo "<a href=\"admin.php?func=aircraft&amp;func_do=edit\">Edit Aicraft</a><br>\n";
-        echo "<a href=\"admin.php?func=aircraft&amp;func_do=duplicate\">Duplicate Aicraft</a><br>\n";
-        echo "<a href=\"admin.php?func=aircraft&amp;func_do=delete\">Delete Aicraft</a>\n";
+        // else no valid func instruction, show aircraft change instructions
+        showAircraftMenu();
       }
       break;
-
-    case "users":
+    }
+    case "users": {
       echo "<div class=\"titletext\">Users Module</div>";
       // display any messages
       if (isset($_REQUEST['message'])) {
@@ -944,8 +962,8 @@ if (isset($_REQUEST["func"])) {
       }
 
       break;
-
-    case "audit":
+    }
+    case "audit": {
       // only admins can view the audit log
       if ($loginlevel != "1") {
         header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?sysmsg=unauthorized');
@@ -985,14 +1003,15 @@ if (isset($_REQUEST["func"])) {
 
       echo "</div>\n\n";
       break;
-
-    default:
+    }
+    default: {
       // user didn't ask for any of the valid functions
       echo "<div class=\"titletext\">Fulcrum Administration</div>";
       echo "<p>Choose a menu item from the bottom toolbar.</p>";
+    }
   }
 } else {
-  // user didn't ask for any function
+  // user didn't ask for any function, just show instructions
   echo "<div class=\"titletext\">Fulcrum Administration</div>";
   echo "<p>Choose a menu item from the bottom toolbar.</p>";
 }

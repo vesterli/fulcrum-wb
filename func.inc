@@ -5,158 +5,24 @@ require 'ver.inc';
 /* VARIABLES */
 $tabindex = 1;
 
-$con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname);
-if (!mysqli_connect_error()) {
-
-
+try {
+	$con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname);
 	$config_result = mysqli_query($con, "SELECT * FROM configuration;");
 	while ($config_row = mysqli_fetch_assoc($config_result)) {
 		$config[$config_row['item']] = $config_row['value'];
 	}
-	// if the database version does not match the version in ver.inc, give an error
-	if ($config['db_version'] != $dbver) {
-		echo "Error: Code requires database version " . $dbver . " but the database is version " . $config['db_version'] . ". Please update code or database.";
-		exit;
-	}
-} else {
-	echo "Error: " . mysqli_connect_error();
+	// if there is a database version, check it
+	if (isset($config['db_version'])) {
+		// if the database version does not match the version in ver.inc, give an error
+		if ($config['db_version'] != $dbver) {
+			echo "Error: Code requires database version " . $dbver . " but the database is version " . $config['db_version'] . ". Please update code or database.";
+			exit;
+		}
+	} // else we are in the setup process
+} catch (Exception $e) {
+	echo "<div class=\"error\">Error connecting to database server. </div>";
 }
 
-function PageHeader($site_name)
-{
-	ob_start();
-	?>
-	<!DOCTYPE HTML>
-	<html>
-
-	<head>
-		<title>Fulcrum W&B -
-			<?php echo ($site_name); ?>
-		</title>
-		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-
-		<style type="text/css">
-			<!--
-			body {
-				background-color: #FFFFFF;
-				font-family: Cambria, Tahoma, Verdana;
-				font-size: 14px;
-			}
-
-			input,
-			select {
-				font-family: Cambria, Tahoma, Verdana;
-				font-size: 11px;
-				border: 1px solid #AAAAAA;
-			}
-
-			table,
-			th,
-			td {
-				border: 1px solid black;
-				border-collapse: collapse;
-				padding: 3px;
-			}
-
-			th {
-				background-color: #4F81BD;
-				text-align: center;
-			}
-
-			tr:nth-child(odd) {
-				background-color: #FFFFFF;
-			}
-
-			tr:nth-child(even) {
-				background-color: #EEEEEE;
-			}
-
-			abbr {
-				border-bottom: 1px dashed;
-				cursor: help;
-			}
-
-			.titletext {
-				color: #17365D;
-				font-size: 24px;
-			}
-
-			.readonly {
-				background-color: #CCCCCC;
-			}
-
-			.numbers {
-				text-align: right;
-				width: 70px;
-			}
-
-			.numbergals {
-				text-align: right;
-				width: 40px;
-				margin-right: 5px;
-			}
-
-			input.hidearrows::-webkit-outer-spin-button,
-			input.hidearrows::-webkit-inner-spin-button {
-				-webkit-appearance: none;
-				margin: 0;
-			}
-
-			input.hidearrows {
-				-moz-appearance: textfield;
-			}
-
-			@media print {
-				.noprint {
-					display: none;
-				}
-			}
-
-			#toolbar {
-				width: 700px;
-				left: 0px;
-				right: 0px;
-				height: 35px;
-				position: fixed;
-				bottom: 0px;
-				margin-right: auto;
-				margin-left: auto;
-				z-index: 100;
-				background-color: #00304E;
-				color: white;
-			}
-
-			#toolbar a:link,
-			#toolbar a:visited,
-			#toolbar a:hover {
-				color: white;
-				text-decoration: none;
-			}
-			-->
-		</style>
-		<?php
-}
-
-function PageFooter($site_name, $admin, $ver, $dbver)
-{
-	?>
-		<p class="noprint" style="text-align:center; font-size:12px; font-style:italic;">
-			<?php echo ($site_name); ?> - <a href="mailto:<?php echo ($admin); ?>?subject=Fulcrum%20W%26B">
-				<?php echo ($admin); ?>
-			</a><br />
-			<a href="https://github.com/vesterli/fulcrum-wb" target="_blank">Fulcrum W&amp;B</a> open source Weight &amp;
-			Balance software</a>
-			<?php echo ($ver); ?> (DB
-			<?php echo ($dbver); ?>)<br />
-			Based on <a href="https://sourceforge.net/projects/tippingpoint/" target="_blank">TippingPoint</a> by Caleb Newville
-		</p>
-		<div style="height: 20px;"></div>
-		</body>
-
-	</html>
-	<?php
-	ob_end_flush();
-}
 
 function TimezoneList($str)
 {
@@ -258,5 +124,4 @@ function AuditLog($login_user, $log_message)
 	}
 
 }
-
 ?>
