@@ -1,10 +1,12 @@
 <?php
 include 'func.inc';
 include 'htmltext.inc';
-PageHeader($config['site_name']);
-?>
 
-<?php
+// connect to the database, checking version
+connectDB(true);
+
+PageHeader($config['site_name']);
+
 if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
     // NO AIRCRAFT SPECIFIED, SHOW ACTIVE AIRCRAFT LIST
     echo "<body>\n";
@@ -272,6 +274,23 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
                 warning_flag = true
             }
 
+            // Check for aft CG
+            if  (parseFloat(Math.round(totarm_to*100)/100)>c2) {
+                var message = "The takeoff CG is aft of the limits for this aircraft."
+                warnings.push(message)
+                warning_flag = true  
+            }
+
+            // Check for fwd CG
+            if  ( (parseFloat(Math.round(totarm_to*100)/100)>c2)&&
+                (parseFloat(Math.round(totarm_to*100)/100)<c1) &&
+                (parseFloat(Math.round(totwt_to))> (w1 - ((w1-w2)/(c1-c2))*c1 + ((w1-w2)/(c1-c2))*(parseFloat(Math.round(totarm_to*100)/100)))))
+            {
+                var message = "The takeoff CG is forward of the limits for this aircraft."
+                warnings.push(message)
+                warning_flag = true  
+            }
+
             // check if takeoff is within envelope
             if (!isPointInsidePolygon([totarm_to, totwt_to], envelope)) {
                 var message = "The takeoff CG is outside the "
@@ -386,7 +405,7 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
                         $updated_query_stmt->execute();
                         $updated_query = $updated_query_stmt->get_result();
                         $updated = mysqli_fetch_assoc($updated_query);
-                        echo "Aircraft last updated: " . date("j M Y", strtotime($updated['timestamp']) - $timezoneoffset) . "<br>\n"; ?>
+                        echo "Aircraft last updated: " . date("j M Y", strtotime($updated['timestamp'])) . "<br>\n"; ?>
                         <p><b>PILOT SIGNATURE X__________________________________________________</b><br>
                             The Pilot In Command is responsible for ensuring all calculations are correct.<br>
                             <?php echo date("D, j M Y H:i:s T"); ?>

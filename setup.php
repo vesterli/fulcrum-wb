@@ -100,7 +100,6 @@
 			                break;
 
 		                case "step3":
-			                $config['timezone'] = "Europe/Copenhagen";
 			                require 'func.inc';
 
 			                echo ("<p>Define system settings.</p>\n"
@@ -108,22 +107,18 @@
 			                	. "<table align=\"center\">\n"
 			                	. "<tr><td align=\"right\">Site/Organization Name</td><td><input type=\"text\" name=\"site_name\"></td></tr>\n"
 			                	. "<tr><td align=\"right\">Administrator E-mail Address</td><td><input type=\"email\" name=\"administrator\"></td></tr>\n"
-			                	. "<tr><td align=\"right\">Local Time Zone</td><td>\n");
-			                TimeZoneList("");
-			                echo "</td></tr>\n"
-			                	. "<tr><td colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Step 3\"></td></tr></table></form>\n";
-
+								. "</td></tr>\n"
+			                	. "<tr><td colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Step 3\"></td></tr></table></form>\n");
 			                break;
 
 		                case "step4":
-			                $config['timezone'] = "Europe/Copenhagen";
 			                include "func.inc";
 			                $con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname) or die(mysqli_connect_error());
 
 			                // Insert system settings into database
                 			$sql_query = "INSERT INTO `configuration` (`id`, `item`, `value`) "
-			                	. "VALUES (1, 'site_name', '" . $_REQUEST['site_name'] . "'), (2, 'administrator', '" . $_REQUEST['administrator'] . "'), (3, 'timezone', '" . $_REQUEST['timezone'] . "'), "
-			                	. "(4, 'db_version', '" . $dbver . "');";
+			                	. "VALUES (1, 'site_name', '" . $_REQUEST['site_name'] . "'), (2, 'administrator', '" . $_REQUEST['administrator'] . "'), "
+			                	. "(3, 'db_version', '" . $dbver . "');";
 			                mysqli_query($con, $sql_query);
 
 			                echo ("<p>Create an administrative user.</p>\n"
@@ -141,6 +136,8 @@
 
 		                case "step5":
 			                include "func.inc";
+							$con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname) or die(mysqli_connect_error());
+							
 			                // Insert administrative user
                 			$sql_query = "INSERT INTO `users` (`username`, `password`, `name`, `email`, `superuser`) VALUES "
 			                	. "('" . $_REQUEST['username'] . "', '" . password_hash($_REQUEST['password'], PASSWORD_DEFAULT) . "', '" . $_REQUEST['name'] . "', '" . $_REQUEST['email'] . "', '1')";

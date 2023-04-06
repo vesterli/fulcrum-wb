@@ -5,69 +5,28 @@ require 'ver.inc';
 /* VARIABLES */
 $tabindex = 1;
 
-try {
-	$con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname);
-	$config_result = mysqli_query($con, "SELECT * FROM configuration;");
-	while ($config_row = mysqli_fetch_assoc($config_result)) {
-		$config[$config_row['item']] = $config_row['value'];
-	}
-	// if there is a database version, check it
-	if (isset($config['db_version'])) {
-		// if the database version does not match the version in ver.inc, give an error
-		if ($config['db_version'] != $dbver) {
-			echo "Error: Code requires database version " . $dbver . " but the database is version " . $config['db_version'] . ". Please update code or database.";
-			exit;
+// connect to the database, check database version	
+function connectDB($checkdb) {
+	global $dbserver, $dbuser, $dbpass, $dbname, $dbver, $config, $con;
+	try {
+		$con = mysqli_connect($dbserver, $dbuser, $dbpass, $dbname);
+		$config_result = mysqli_query($con, "SELECT * FROM configuration;");
+		while ($config_row = mysqli_fetch_assoc($config_result)) {
+			$config[$config_row['item']] = $config_row['value'];
 		}
-	} // else we are in the setup process
-} catch (Exception $e) {
-	echo "<div class=\"error\">Error connecting to database server. </div>";
-}
-
-
-function TimezoneList($str)
-{
-	echo ("<select id=\"timezone\" name=\"timezone\">");
-	$timezone_identifiers = DateTimeZone::listIdentifiers();
-	foreach ($timezone_identifiers as $value) {
-		if (preg_match('/^(America|Antartica|Arctic|Asia|Atlantic|Europe|Indian|Pacific)\//', $value)) {
-			$ex = explode("/", $value); //obtain continent,city
-			if ($continent != $ex[0]) {
-				if ($continent != "")
-					echo "</optgroup>\n";
-				echo "<optgroup label=\"" . $ex[0] . "\">\n";
+		// if there is a database version, check it
+		if (($checkdb == true) && (isset($config['db_version']))) {
+			// if the database version does not match the version in ver.inc, give an error
+			if ($config['db_version'] != $dbver) {
+				echo "Error: Code requires database version " . $dbver . " but the database is version " . $config['db_version'] . ". Please update code or database.";
+				exit;
 			}
-			$city = $ex[1];
-			if (is_null($ex[2]) == FALSE) {
-				$city = $city . "/" . $ex[2];
-			}
-			$continent = $ex[0];
-			echo "<option value=\"" . $value . "\"";
-			if ($str == $value) {
-				echo " selected";
-			}
-			echo ">" . $city . "</option>\n";
-		}
+		} // else we are in the setup process or updating, silently exit
+	} catch (Exception $e) {
+		echo "<div class=\"error\">Error connecting to database server. </div>";
+		exit;
 	}
-	echo ("</optgroup></select>");
 }
-
-function get_timezone_offset($remote_tz, $origin_tz = null)
-{
-	if ($origin_tz === null) {
-		if (!is_string($origin_tz = date_default_timezone_get())) {
-			return false; // A UTC timestamp was returned -- bail out!
-		}
-	}
-	$origin_dtz = new DateTimeZone($origin_tz);
-	$remote_dtz = new DateTimeZone($remote_tz);
-	$origin_dt = new DateTime("now", $origin_dtz);
-	$remote_dt = new DateTime("now", $remote_dtz);
-	$offset = $origin_dtz->getOffset($origin_dt) - $remote_dtz->getOffset($remote_dt);
-	return $offset;
-}
-$timezoneoffset = get_timezone_offset($config['timezone']);
-date_default_timezone_set($config['timezone']);
-
 function AircraftListActive()
 {
 	require 'config.inc';

@@ -2,6 +2,11 @@
 // this file updates the 0.8.1 (initial), 0.8.2 and 0.9.0 database to 1.0.0
 
 include 'func.inc';
+include 'htmltext.inc';
+
+// connect to the database, don't check version
+connectDB(false);
+
 PageHeader($config['site_name']);
 
 // HTML to say that the database is being updated

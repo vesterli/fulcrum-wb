@@ -1,11 +1,12 @@
 <?php
 include 'func.inc';
 include 'htmltext.inc';
+
+// connect to the database, checking version
+connectDB(true);
 PageHeader("Admin Interface");
 session_start();
-?>
 
-<?php
 // Login validation
 if (isset($_REQUEST['func']) && $_REQUEST['func'] != "login") {
   $loginuser = $_SESSION["loginuser"];
@@ -26,13 +27,6 @@ if (isset($_REQUEST['func']) && $_REQUEST['func'] != "login") {
 }
 
 echo "<body>\n";
-// Verify database version OK
-if ($dbver != $config['db_version'] && $loginlevel == "1") {
-  echo "<div style=\"text-align: center; background-color: #FFFF80\">\n";
-  echo "Setup error: Fulcrum database is version " . $config['db_version'] . ", expected " . $dbver . ".<br>\n";
-  echo "Please update the database. <br>\n";
-  echo "</div>\n";
-}
 
 // Display system messages
 echo "<table style=\"width:700px; margin-left:auto; margin-right:auto;\"><tr><td>";
@@ -107,9 +101,7 @@ if (isset($_REQUEST["func"])) {
         echo "<table style=\"margin-left: auto; margin-right: auto;\">"
           . "<tr><td style=\"text-align: right\">Site/Organization Name</td><td><input type=\"text\" name=\"site_name\" value=\"" . $config['site_name'] . "\"></td></tr>"
           . "<tr><td style=\"text-align: right\">Administrator E-mail Address</td><td><input type=\"email\" name=\"administrator\" value=\"" . $config['administrator'] . "\"></td></tr>"
-          . "<tr><td style=\"text-align: right\">Local Time Zone</td><td>";
-        TimeZoneList($config['timezone']);
-        echo "</td></tr>"
+          . "</td></tr>"
           . "<tr><td colspan=\"2\" style=\"text-align: center;\"><input type=\"submit\" value=\"Save\"></td></tr></table></form>";
       }
       break;

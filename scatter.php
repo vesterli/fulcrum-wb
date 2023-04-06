@@ -1,6 +1,9 @@
 <?php
 include 'func.inc';
 
+// connect to the database, checking version
+connectDB(true);
+
 // DEFINE VARIABLES
 $chart_size = (isset($_GET["size"])) ? $_GET["size"] : "large";
 $plot_envelope = "";
