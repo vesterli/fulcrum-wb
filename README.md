@@ -12,7 +12,7 @@ It is a Dec 2020 fork from TippingPoint (http://tippingpoint.sourceforge.net) by
 * MySQL/MariaDB
 
 ## Download
-[Download version 1.5.2](https://github.com/vesterli/fulcrum-wb/archive/v1.5.2.zip)
+[Download version 1.5.5](https://github.com/vesterli/fulcrum-wb/archive/v1.5.5.zip)
 
 ## Installation
 1. Download the code
