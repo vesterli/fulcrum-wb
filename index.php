@@ -161,6 +161,7 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
         }
 
         function Process() {
+            // log the function call
             var df = document.forms[0];
 
             <?php
@@ -306,24 +307,35 @@ if (!isset($_REQUEST['tailnumber']) || ($_REQUEST['tailnumber'] == "")) {
                 warning_flag = true
             }
 
+            // get all lineXXX_maxweight fields
+            var lineElements = document.querySelectorAll("[id^='line'][id$='_maxweight']");
 
-            // get the linecount from the hidden field
-            var linecount = document.getElementById("linecount").value
-            // loop though the lines
-            for (i = 1; i <= linecount; i++) {
-                // if there is a maxweight field
-                if (document.getElementById("line" + i + "_maxweight")) {
-                    // and it has a value
-                    if (document.getElementById("line" + i + "_maxweight").value) {
-                        // if the line weight is greater than the maxweight
-                        if (parseFloat(document.getElementById("line" + i + "_wt").value) > parseFloat(document.getElementById("line" + i + "_maxweight").value)) {
-                            // add the message to the warnings array
-                            warnings.push("The " + document.getElementById("line" + i + "_item").value + " line is above the max weight for this position! ")
-                            warning_flag = true
+            // Extract the unique line numbers
+            var lineNumbers = [];
+            lineElements.forEach(function(element) {
+                // Get the ID of the element, e.g., "line104_maxweight"
+                var id = element.id;
+                // Extract the line number using a regular expression
+                var match = id.match(/^line(\d+)_maxweight$/);
+                if (match) {
+                    lineNumbers.push(match[1]);
+                }
+            });
+
+            // Loop through the unique line numbers
+            lineNumbers.forEach(function(lineNumber) {
+                var maxweightField = document.getElementById("line" + lineNumber + "_maxweight");
+                if (maxweightField && maxweightField.value) {
+                    var weightField = document.getElementById("line" + lineNumber + "_wt");
+                    if (weightField && parseFloat(weightField.value) > parseFloat(maxweightField.value)) {
+                        var itemField = document.getElementById("line" + lineNumber + "_item");
+                        if (itemField) {
+                            warnings.push("The " + itemField.value + " line is above the max weight for this position!");
+                            warning_flag = true;
                         }
                     }
                 }
-            }
+            });
 
             // if warning flag set, call showPopup function with the warnings array
             if (warning_flag) {
