@@ -745,6 +745,12 @@ if (isset($_REQUEST["func"])) {
                   // set fuel based on checkbox 
                   if (isset($_REQUEST['fuel']) && $_REQUEST['fuel'] == "true") {
                     $fuel = 'true';
+                    // get the fuel weight
+                    if (isset($_REQUEST['fuelwt'])) {
+                      $fuelwt = $_REQUEST['fuelwt'];
+                    } else {
+                      $fuelwt = null;
+                    }
                   } else {
                     $fuel = 'false';
                   }
@@ -770,7 +776,7 @@ if (isset($_REQUEST["func"])) {
                     $_REQUEST['arm'], 
                     $emptyweight, 
                     $fuel,
-                    $_REQUEST['$fuelwt'], 
+                    $fuelwt, 
                     $_REQUEST['id']
                   );
                   mysqli_stmt_execute($update_aircraft_weight_stmt);
