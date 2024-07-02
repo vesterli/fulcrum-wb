@@ -1,4 +1,7 @@
 error_log
 learnor1_fulcrumdb.sql
 config.inc
+/mysql_data/
+/vendor/
+.DS_Store
 .DS_Store
