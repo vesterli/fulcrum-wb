@@ -205,38 +205,50 @@ if (isset($_REQUEST["func"])) {
               $aircraft_result = mysqli_stmt_get_result($stmt);
               $aircraft = mysqli_fetch_assoc($aircraft_result);
 
-              if (
-                !mysqli_query(
-                  $con,
-                  "INSERT INTO aircraft (
-                  `active`
-                , `tailnumber`
-                , `makemodel`
-                , `emptywt`
-                , `emptycg`
-                , `maxwt`
-                , `cgwarnfwd`
-                , `cgwarnaft`
-                , `weighing_date`
-                , `weighing_sheet_url`
-                , `fuelunit`
-                ) VALUES (
-                  '0'
-                , '" . $_REQUEST['newtailnumber'] . "'
-                , '" . $_REQUEST['newmakemodel'] . "'
-                , '" . $aircraft['emptywt'] . "'
-                , '" . $aircraft['emptycg'] . "'
-                , '" . $aircraft['maxwt'] . "'
-                , '" . $aircraft['cgwarnfwd'] . "'
-                , '" . $aircraft['cgwarnaft'] . "'
-                , '" . $aircraft['weighing_date'] . "'
-                , '" . $aircraft['weighing_sheet_url'] . "'
-                , '" . $aircraft['fuelunit'] . "'
-                );"
-                )
-              ) {
-                error_log("Error duplicating aircraft: " . mysqli_error($con));
+              // duplicate the aircraft, handling any null values in source
+              $sql = "INSERT INTO aircraft (
+                active,
+                tailnumber,
+                makemodel,
+                emptywt,
+                emptycg,
+                maxwt,
+                cgwarnfwd,
+                cgwarnaft,
+                weighing_date,
+                weighing_sheet_url,
+                fuelunit
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+              
+              if (!$stmt = mysqli_prepare($con, $sql)) {
+                die("Error preparing statement: " . mysqli_error($con));
               }
+            
+              $active = 0;
+              $weighing_date = isset($aircraft['weighing_date']) ? $aircraft['weighing_date'] : null;
+              $bind_param_result = mysqli_stmt_bind_param($stmt, "sssssssssss",
+                  $active, // active
+                  $_REQUEST['newtailnumber'],
+                  $_REQUEST['newmakemodel'],
+                  $aircraft['emptywt'],
+                  $aircraft['emptycg'],
+                  $aircraft['maxwt'],
+                  $aircraft['cgwarnfwd'],
+                  $aircraft['cgwarnaft'],
+                  $weighing_date, // Handle null for weighing_date
+                  $aircraft['weighing_sheet_url'],
+                  $aircraft['fuelunit']
+              );
+              
+              if (!$bind_param_result) {
+                die("Error binding parameters: " . mysqli_stmt_error($stmt));
+              }
+              
+              if (!mysqli_stmt_execute($stmt)) {
+                die("Error executing statement: " . mysqli_stmt_error($stmt));
+              }
+              
+              mysqli_stmt_close($stmt);
 
               // get id of new aircraft
               $sql = "SELECT * FROM aircraft WHERE tailnumber = ? ORDER BY id DESC LIMIT 1";
