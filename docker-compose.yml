@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  php:
+    build: .
+    container_name: fulcrum_php
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8008:80"
+    command: bash -c "composer update && composer install && php -S 0.0.0.0:80 -t /var/www/html"
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: fulcrum_owner
+      DB_PASSWORD: Fu1crum.0wner
+      DB_NAME: fulcrumdb
+
+  mysql:
+    image: mysql:8.0
+    container_name: fulcrum_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: tioWcHWwE9_rggZMKZK7
+      MYSQL_DATABASE: fulcrumdb
+      MYSQL_USER: fulcrum_owner
+      MYSQL_PASSWORD: Fu1crum.0wner
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
+
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin:latest
+      container_name: fulcrum_phpmyadmin
+      environment:
+        PMA_HOST: mysql
+        MYSQL_ROOT_PASSWORD: tioWcHWwE9_rggZMKZK7
+        PMA_PORT: 3306
+      ports:
+        - "8088:80"
+      depends_on:
+        - mysql
+      restart: always

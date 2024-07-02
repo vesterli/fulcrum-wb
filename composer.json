@@ -1,0 +1,15 @@
+{
+    "name": "vesterli/fulcrum-wb",
+    "description": "Weight & balance for GA aircraft",
+    "type": "project",
+    "require": {
+    },
+    "authors": [
+        {
+            "name": "Sten Vesterli",
+            "email": "sten@vesterli.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
+
