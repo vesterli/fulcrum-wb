@@ -47,3 +47,4 @@ You will now be prompted for database connect information and be taken through t
 
 ### Bug reports and improvement suggestions
 Go to the [Issues page on GitHub](https://github.com/vesterli/fulcrum-wb/issues) to see existing bugs and already suggested improvements. If you have a Github account, you can add more.
+ 
